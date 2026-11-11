@@ -5,14 +5,21 @@ import { PasswordField, TextField } from "@/components/custum/field";
 import { Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { authStore } from "@/store/auth-store";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
-  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setRememberMe(authStore.getState().rememberMe);
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -22,15 +29,11 @@ export default function LoginPage() {
     setErrors(next);
     if (Object.keys(next).length) return;
 
-    setLoading(true);
     try {
-      // TODO : POST `${process.env.NEXT_PUBLIC_API_URL}/auth/login` (NestJS) puis redirection selon le rôle
-      await new Promise((r) => setTimeout(r, 900));
-      router.push("/patient");
-    } catch {
-      setErrors({ form: "Connexion impossible. Vérifiez vos identifiants et réessayez." });
-    } finally {
-      setLoading(false);
+      const { user } = await login({ email: email.trim(), password }, rememberMe);
+      router.replace(user.role === "doctor" ? "/medecin" : "/patient");
+    } catch (cause) {
+      setErrors({ form: cause instanceof Error ? cause.message : "Connexion impossible. Réessayez." });
     }
   }
 
@@ -53,7 +56,7 @@ export default function LoginPage() {
 
         <div className="flex items-center justify-between text-sm">
           <label className="flex cursor-pointer items-center gap-2.5 font-medium">
-            <input type="checkbox" className="size-5 rounded border-slate-300 accent-primary" /> Rester connecté
+            <input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="size-5 rounded border-slate-300 accent-primary" /> Rester connecté
           </label>
           <Link href="/forgot-password" className="font-semibold text-primary hover:underline">Mot de passe oublié ?</Link>
         </div>

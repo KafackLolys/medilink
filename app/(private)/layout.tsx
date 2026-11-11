@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Footer } from "./components/footer";
 import { Header, PatientBottomNav } from "./components/header";
 
@@ -8,10 +9,14 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
       <div aria-hidden className="absolute -left-40 -top-40 size-[32rem] rounded-full bg-primary/10 blur-3xl" />
       <div aria-hidden className="absolute -right-40 top-40 size-[28rem] rounded-full bg-secondary/10 blur-3xl" />
       <div className="relative">
-        <Header />
+        <Suspense fallback={<div className="h-[68px]" aria-hidden />}>
+          <Header />
+        </Suspense>
         <main className="mx-auto max-w-[1160px] px-5 pb-28 pt-8 sm:px-8 lg:pb-20">{children}</main>
         <Footer />
-        <PatientBottomNav />
+        <Suspense fallback={null}>
+          <PatientBottomNav />
+        </Suspense>
       </div>
     </div>
   );

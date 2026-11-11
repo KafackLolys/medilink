@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { AuthShell, GoogleButton, OrDivider } from "@/components/custum/auth-shell";
 import { PasswordField, SelectField, TextField } from "@/components/custum/field";
 import { Button } from "@/components/custum/button";
+import { useAuth } from "@/hooks/use-auth";
 
 type Role = "patient" | "doctor";
 const ROLES = [
@@ -26,9 +27,9 @@ function strength(p: string) {
 
 export default function RegisterPage() {
   const [role, setRole] = useState<Role | null>(null);
+  const { register, loading } = useAuth();
   const [step, setStep] = useState<1 | 2>(1);
   const [done, setDone] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [terms, setTerms] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [f, setF] = useState({ firstName: "", lastName: "", email: "", phone: "", password: "", specialty: "", licence: "" });
@@ -51,23 +52,45 @@ export default function RegisterPage() {
     setErrors(n);
     if (Object.keys(n).length) return;
 
-    setLoading(true);
-    // TODO : POST `${process.env.NEXT_PUBLIC_API_URL}/auth/register` (NestJS) avec { role, ...f }
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    setDone(true);
+    if (!role) return;
+    try {
+      await register({
+        firstName: f.firstName.trim(),
+        lastName: f.lastName.trim(),
+        email: f.email.trim(),
+        phone: f.phone.trim(),
+        password: f.password,
+        role,
+        ...(role === "doctor" ? { specialty: f.specialty, registrationNumber: f.licence.trim() } : {}),
+      });
+      setDone(true);
+    } catch (cause) {
+      setErrors({ form: cause instanceof Error ? cause.message : "Inscription impossible. Réessayez." });
+    }
   }
 
   if (done)
     return (
       <AuthShell compact>
         <div className="text-center">
-          <span className="mx-auto grid size-16 place-items-center rounded-2xl bg-success/10 text-success"><MailCheck className="size-8" aria-hidden /></span>
-          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-night">Vérifiez votre e-mail</h1>
-          <p className="mt-3 text-base text-muted">
-            Nous avons envoyé un lien de confirmation à <strong className="text-ink">{f.email}</strong>.
-            {role === "doctor" && " Vous pourrez ensuite envoyer vos justificatifs pour faire vérifier votre compte professionnel."}
-          </p>
+          <div role="status" aria-live="polite" className="rounded-2xl border border-success/20 bg-success/5 p-6">
+            <span className="mx-auto grid size-16 place-items-center rounded-2xl bg-success/10 text-success">
+              <MailCheck className="size-8" aria-hidden />
+            </span>
+            <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-night">E-mail de confirmation envoyé</h1>
+            <p className="mt-3 text-base text-muted">
+              Un e-mail de vérification a été envoyé à{" "}
+              <strong className="break-all text-ink">{f.email}</strong>.
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              Consultez votre boîte de réception et vos courriers indésirables, puis cliquez sur le lien pour activer votre compte.
+            </p>
+            {role === "doctor" && (
+              <p className="mt-3 text-sm text-muted">
+                Après activation, vous pourrez envoyer vos justificatifs pour faire vérifier votre compte professionnel.
+              </p>
+            )}
+          </div>
           <Link href="/login" className="mt-8 inline-flex h-12 w-full items-center justify-center rounded-xl border border-slate-200 bg-white font-semibold hover:bg-slate-50">
             Retour à la connexion
           </Link>
@@ -123,6 +146,7 @@ export default function RegisterPage() {
           </h1>
 
           <form onSubmit={onSubmit} noValidate className="mt-6 space-y-5 md:mt-3 md:space-y-2.5">
+            {errors.form && <p role="alert" className="rounded-xl bg-danger/10 px-4 py-3 text-sm font-medium text-danger">{errors.form}</p>}
             <div className="grid gap-5 sm:grid-cols-2 md:gap-3">
               <TextField compact label="Prénom" autoComplete="given-name" value={f.firstName} onChange={set("firstName")} error={errors.firstName} />
               <TextField compact label="Nom" autoComplete="family-name" value={f.lastName} onChange={set("lastName")} error={errors.lastName} />

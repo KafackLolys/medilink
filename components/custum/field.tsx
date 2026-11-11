@@ -1,6 +1,6 @@
 "use client";
 import { Eye, EyeOff } from "lucide-react";
-import { useId, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
+import { useId, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes  } from "react";
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -71,18 +71,33 @@ export function PasswordField(props: Omit<FieldProps, "type" | "trailing">) {
   );
 }
 
-type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & { label: string; error?: string; options: string[]; compact?: boolean };
+type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & { label: string; error?: string; options: string[]; compact?: boolean; placeholder?: string };
 
-export function SelectField({ label, error, options, compact, className = "", ...rest }: SelectProps) {
+export function SelectField({ label, error, options, compact, placeholder = "Choisir une spécialité", className = "", ...rest }: SelectProps) {
   const id = useId();
   return (
     <div>
       <label htmlFor={id} className={`mb-1.5 block text-sm font-semibold text-ink ${compact ? "md:mb-1 md:text-xs" : ""}`}>{label}</label>
-      <select id={id} aria-invalid={!!error} {...rest} className={`${base} ${state(error)} px-4 ${compact ? "md:h-8 md:rounded-lg md:text-xs" : ""} ${className}`}>
-        <option value="">Choisir une spécialité</option>
+      <select id={id} aria-invalid={!!error} {...rest} className={`h-12 ${base} ${state(error)} px-4 ${className}`}>
+        <option value="">{placeholder}</option>
         {options.map((o) => <option key={o}>{o}</option>)}
       </select>
       <Message id={`${id}-msg`} error={error} />
+    </div>
+  );
+}
+
+type AreaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; error?: string; hint?: string };
+
+export function TextAreaField({ label, error, hint, className = "", ...rest }: AreaProps) {
+  const id = useId();
+  const msg = `${id}-msg`;
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1.5 block text-sm font-semibold text-ink">{label}</label>
+      <textarea id={id} rows={5} aria-invalid={!!error} aria-describedby={error || hint ? msg : undefined} {...rest}
+        className={`${base} ${state(error)} resize-y px-4 py-3 leading-relaxed ${className}`} />
+      <Message id={msg} error={error} hint={hint} />
     </div>
   );
 }

@@ -1,0 +1,75 @@
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type { AuthenticatedUser, LoginResponse } from "@/services/auth-service";
+
+export interface AuthSession {
+  user: AuthenticatedUser;
+  idToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresAt: number;
+}
+
+interface PersistedAuthState {
+  session: AuthSession | null;
+  rememberMe: boolean;
+}
+
+interface AuthState extends PersistedAuthState {
+  setSession: (response: LoginResponse, rememberMe: boolean) => AuthSession;
+  setRememberMe: (rememberMe: boolean) => void;
+  clearSession: () => void;
+}
+
+const authStorage = createJSONStorage<PersistedAuthState>(() => ({
+  getItem: (name) => localStorage.getItem(name),
+  setItem: (name, value) => {
+    const persisted = JSON.parse(value) as { state?: PersistedAuthState };
+    if (persisted.state?.rememberMe) {
+      localStorage.setItem(name, value);
+    } else {
+      localStorage.removeItem(name);
+    }
+  },
+  removeItem: (name) => localStorage.removeItem(name),
+}));
+
+export const authStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      session: null,
+      rememberMe: false,
+      setSession: (response, rememberMe) => {
+        if (
+          !response.idToken
+          || !response.refreshToken
+          || !response.tokenType
+          || !Number.isFinite(response.expiresIn)
+          || response.expiresIn <= 0
+        ) {
+          throw new Error("La réponse de connexion ne contient pas de jetons valides.");
+        }
+
+        const session: AuthSession = {
+          user: response.user,
+          idToken: response.idToken,
+          refreshToken: response.refreshToken,
+          tokenType: response.tokenType,
+          expiresAt: Date.now() + response.expiresIn * 1000,
+        };
+        set({ session, rememberMe });
+        return session;
+      },
+      setRememberMe: (rememberMe) => set({ rememberMe }),
+      clearSession: () => set({ session: null, rememberMe: false }),
+    }),
+    {
+      name: "medilink-auth",
+      storage: authStorage,
+      partialize: (state): PersistedAuthState => ({
+        session: state.rememberMe ? state.session : null,
+        rememberMe: state.rememberMe,
+      }),
+    },
+  ),
+);
