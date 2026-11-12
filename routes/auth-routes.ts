@@ -19,7 +19,7 @@ export const authRoutes = {
   },
   Refresh: {
     url: `${API_URL}/auth/refresh`,
-    method: 'GET',
+    method: "POST",
   },
   ResetUserIdentifiers: {
     url: `${API_URL}/auth/reset-password`,

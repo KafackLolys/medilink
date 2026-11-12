@@ -18,7 +18,9 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
 
   useEffect(() => {
-    setRememberMe(authStore.getState().rememberMe);
+    void Promise.resolve().then(() => {
+      setRememberMe(authStore.getState().rememberMe);
+    });
   }, []);
 
   async function onSubmit(e: FormEvent) {
@@ -31,7 +33,13 @@ export default function LoginPage() {
 
     try {
       const { user } = await login({ email: email.trim(), password }, rememberMe);
-      router.replace(user.role === "doctor" ? "/medecin" : "/patient");
+      router.replace(
+        user.role === "admin"
+          ? "/admin"
+          : user.role === "doctor"
+            ? "/medecin"
+            : "/patient",
+      );
     } catch (cause) {
       setErrors({ form: cause instanceof Error ? cause.message : "Connexion impossible. Réessayez." });
     }

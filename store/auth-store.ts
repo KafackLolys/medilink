@@ -17,6 +17,7 @@ interface PersistedAuthState {
 
 interface AuthState extends PersistedAuthState {
   setSession: (response: LoginResponse, rememberMe: boolean) => AuthSession;
+  updateTokens: (tokens: Pick<AuthSession, "idToken" | "refreshToken" | "tokenType"> & { expiresIn: number }) => void;
   setRememberMe: (rememberMe: boolean) => void;
   clearSession: () => void;
 }
@@ -59,6 +60,26 @@ export const authStore = create<AuthState>()(
         };
         set({ session, rememberMe });
         return session;
+      },
+      updateTokens: ({ idToken, refreshToken, tokenType, expiresIn }) => {
+        if (!idToken || !refreshToken || !tokenType || !Number.isFinite(expiresIn) || expiresIn <= 0) {
+          throw new Error("La réponse de renouvellement ne contient pas de jetons valides.");
+        }
+
+        set((state) => {
+          if (!state.session) {
+            throw new Error("Aucune session à renouveler.");
+          }
+          return {
+            session: {
+              ...state.session,
+              idToken,
+              refreshToken,
+              tokenType,
+              expiresAt: Date.now() + expiresIn * 1000,
+            },
+          };
+        });
       },
       setRememberMe: (rememberMe) => set({ rememberMe }),
       clearSession: () => set({ session: null, rememberMe: false }),

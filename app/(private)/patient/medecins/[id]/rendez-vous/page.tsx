@@ -1,15 +1,21 @@
-import { DOCTORS } from "@/lib/doctors";
-import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import AppointmentBookingForm from "./appointment-booking-form";
 
-export function generateStaticParams() {
-  return DOCTORS.map(({ id }) => ({ id }));
+export default function BookAppointmentPage({
+  params,
+}: PageProps<"/patient/medecins/[id]/rendez-vous">) {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-2xl rounded-3xl bg-white p-8 text-center text-muted">Chargement du médecin…</div>}>
+      <AppointmentBookingRoute params={params} />
+    </Suspense>
+  );
 }
 
-export default async function BookAppointmentPage({ params }: PageProps<"/patient/medecins/[id]/rendez-vous">) {
+async function AppointmentBookingRoute({
+  params,
+}: {
+  params: PageProps<"/patient/medecins/[id]/rendez-vous">["params"];
+}) {
   const { id } = await params;
-  const doctor = DOCTORS.find((item) => item.id === id);
-  if (!doctor) notFound();
-
-  return <AppointmentBookingForm doctor={doctor} />;
+  return <AppointmentBookingForm doctorId={id} />;
 }

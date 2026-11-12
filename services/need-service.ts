@@ -45,6 +45,85 @@ export interface UpdateNeedRequest {
   mode: "domicile" | "tele";
 }
 
+export interface DoctorNeedFilters {
+  q?: string;
+  specialty?: string;
+  priority?: "routine" | "urgent" | "emergency";
+  mode?: "home" | "teleconsultation";
+}
+
+export interface DoctorNeedListItem {
+  id: string;
+  title: string;
+  summary: string;
+  specialty: string;
+  city: string;
+  district: string;
+  mode: "home" | "teleconsultation";
+  priority: "routine" | "urgent" | "emergency";
+  publishedAt: string;
+  availableFrom: string | null;
+  documentsCount: number;
+}
+
+export interface PaginatedDoctorNeeds {
+  items: DoctorNeedListItem[];
+  specialties: string[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface DoctorNeedDetail extends Omit<PatientNeedDetail, "priority"> {
+  priority: "routine" | "urgent" | "emergency";
+  availableFrom: string | null;
+  attachments: PatientNeedDetail["attachments"];
+}
+
+export interface DoctorProposalRequest {
+  message: string;
+  proposedAppointmentAt: string;
+  consultationMode: "home" | "teleconsultation";
+  fee: number;
+  details?: string;
+}
+
+export type ProposalStatus =
+  | "sent"
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "expired"
+  | "cancelled";
+
+export interface DoctorProposal {
+  id: string;
+  needId: string;
+  needTitle: string;
+  specialty: string;
+  city: string;
+  district: string;
+  status: ProposalStatus;
+  message: string;
+  proposedAt: string;
+  proposedAppointmentAt: string | null;
+  consultationMode: "home" | "teleconsultation";
+  fee: number;
+  currency: string;
+  patientResponse: string | null;
+  respondedAt: string | null;
+}
+
+export interface PaginatedDoctorProposals {
+  items: DoctorProposal[];
+  counts: Record<ProposalStatus, number>;
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface CreateNeedRequest {
   title: string;
   specialty: string;
@@ -66,6 +145,37 @@ export const needService = {
     });
   },
 
+  listForDoctor(
+    filters: DoctorNeedFilters,
+    page: number,
+    pageSize: number,
+  ): Promise<PaginatedDoctorNeeds> {
+    const url = new URL(needRoutes.DoctorList.url);
+    url.searchParams.set("page", String(page));
+    url.searchParams.set("pageSize", String(pageSize));
+    if (filters.q) url.searchParams.set("q", filters.q);
+    if (filters.specialty) url.searchParams.set("specialty", filters.specialty);
+    if (filters.priority) url.searchParams.set("priority", filters.priority);
+    if (filters.mode) url.searchParams.set("mode", filters.mode);
+    return apiRequest<PaginatedDoctorNeeds>(url.toString(), {
+      method: needRoutes.DoctorList.method,
+    });
+  },
+
+  listProposalsForDoctor(
+    status: ProposalStatus | "",
+    page: number,
+    pageSize: number,
+  ): Promise<PaginatedDoctorProposals> {
+    const url = new URL(needRoutes.DoctorProposals.url);
+    url.searchParams.set("page", String(page));
+    url.searchParams.set("pageSize", String(pageSize));
+    if (status) url.searchParams.set("status", status);
+    return apiRequest<PaginatedDoctorProposals>(url.toString(), {
+      method: needRoutes.DoctorProposals.method,
+    });
+  },
+
   create(data: CreateNeedRequest, files: File[]): Promise<PatientNeed> {
     const body = new FormData();
     body.append("data", JSON.stringify(data));
@@ -82,6 +192,29 @@ export const needService = {
   detail(id: string): Promise<PatientNeedDetail> {
     const route = needRoutes.Detail(id);
     return apiRequest<PatientNeedDetail>(route.url, { method: route.method });
+  },
+
+  doctorDetail(id: string): Promise<DoctorNeedDetail> {
+    const route = needRoutes.DoctorDetail(id);
+    return apiRequest<DoctorNeedDetail>(route.url, { method: route.method });
+  },
+
+  sendDoctorProposal(
+    id: string,
+    data: DoctorProposalRequest,
+  ): Promise<{ id: string }> {
+    const route = needRoutes.DoctorProposal(id);
+    return apiRequest<{ id: string }>(route.url, {
+      method: route.method,
+      body: JSON.stringify(data),
+    });
+  },
+
+  cancelDoctorProposal(id: string): Promise<{ id: string; status: ProposalStatus }> {
+    const route = needRoutes.CancelDoctorProposal(id);
+    return apiRequest<{ id: string; status: ProposalStatus }>(route.url, {
+      method: route.method,
+    });
   },
 
   update(id: string, data: UpdateNeedRequest): Promise<PatientNeedDetail> {

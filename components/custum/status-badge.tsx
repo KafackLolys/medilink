@@ -1,6 +1,6 @@
 export type Status =
   | "Brouillon" | "Publiée" | "En attente de propositions" | "Propositions reçues" | "Rendez-vous confirmé" | "Clôturée" | "Annulée"
-  | "En attente de confirmation" | "Confirmé" | "Terminé" | "Annulé";
+  | "En attente de confirmation" | "Confirmé" | "Terminé" | "Annulé" | "Refusé" | "Absent";
 
 const TONES = {
   slate: "bg-slate-100 text-slate-600",
@@ -15,6 +15,7 @@ const STATUS_TONE: Record<Status, keyof typeof TONES> = {
   Brouillon: "slate", Publiée: "blue", "En attente de propositions": "blue", "Propositions reçues": "teal",
   "Rendez-vous confirmé": "green", Clôturée: "slate", Annulée: "red",
   "En attente de confirmation": "amber", Confirmé: "green", Terminé: "slate", Annulé: "red",
+  Refusé: "red", Absent: "red",
 };
 
 export function StatusBadge({ status }: { status: Status }) {

@@ -32,7 +32,7 @@ export const REQUESTS: MedicalRequest[] = [
 export const ACTIVE: Status[] = ["Publiée", "En attente de propositions", "Propositions reçues"];
 
 export const NOTIFICATIONS = [
-  { id: "n1", text: "Dr. Paul Ndongo a proposé ses services pour votre demande de maux de tête.", when: "Il y a 2 h" },
-  { id: "n2", text: "Votre rendez-vous du 19 novembre attend la confirmation du médecin.", when: "Hier" },
-  { id: "n3", text: "Complétez vos informations médicales (facultatif) pour aider les médecins.", when: "Il y a 2 jours" },
+  { id: "n1", title: "Nouvelle proposition", text: "Dr. Paul Ndongo a proposé ses services pour votre demande de maux de tête.", when: "Il y a 2 h", unread: true, href: "/patient/demandes" },
+  { id: "n2", title: "Rendez-vous à confirmer", text: "Votre rendez-vous du 19 novembre attend la confirmation du médecin.", when: "Hier", unread: true, href: "/patient/rendez-vous" },
+  { id: "n3", title: "Complétez votre profil", text: "Ajoutez vos informations médicales pour aider les médecins.", when: "Il y a 2 jours", unread: true, href: "/patient/profil" },
 ];

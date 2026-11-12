@@ -3,6 +3,7 @@
 import { Clock, FileText, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/custum/confirm-dialog";
 import { Status, StatusBadge } from "@/components/custum/status-badge";
 import { Tabs } from "@/components/custum/tabs";
 import { usePatientNeeds } from "@/hooks/use-patient-needs";
@@ -74,7 +75,7 @@ export default function RequestsPage() {
     try {
       await close(id);
     } catch (cause) {
-      setError(
+      throw new Error(
         cause instanceof Error ? cause.message : "Impossible de clôturer la demande.",
       );
     } finally {
@@ -167,7 +168,19 @@ export default function RequestsPage() {
                   <div className="flex flex-wrap gap-2">
                     <Link href={`/patient/demandes/${need.id}`} className="inline-flex h-11 items-center rounded-full bg-primary px-6 font-semibold text-white">Consulter</Link>
                     {status === "Brouillon" && <Link href={`/patient/demandes/${need.id}/modifier`} className="inline-flex h-11 items-center rounded-full bg-surface px-6 font-semibold text-ink">Modifier</Link>}
-                    {isActive(need) && <button type="button" disabled={actionId === need.id} onClick={() => void closeNeed(need.id)} className="inline-flex h-11 items-center rounded-full px-4 font-semibold text-muted hover:text-danger disabled:opacity-50">Clôturer</button>}
+                    {isActive(need) && (
+                      <ConfirmDialog
+                        trigger={
+                          <button type="button" disabled={actionId === need.id} className="inline-flex h-11 items-center rounded-full px-4 font-semibold text-muted hover:text-danger disabled:opacity-50">
+                            Clôturer
+                          </button>
+                        }
+                        title="Clôturer cette demande ?"
+                        description="Les médecins ne pourront plus vous envoyer de propositions pour cette demande. Cette action ne peut pas être annulée."
+                        confirmLabel={actionId === need.id ? "Clôture en cours…" : "Clôturer la demande"}
+                        onConfirm={() => closeNeed(need.id)}
+                      />
+                    )}
                     {status === "Brouillon" && <button type="button" disabled={actionId === need.id} onClick={() => void deleteNeed(need.id)} className="inline-flex h-11 items-center rounded-full px-4 font-semibold text-muted hover:text-danger disabled:opacity-50">Supprimer</button>}
                   </div>
                 </div>

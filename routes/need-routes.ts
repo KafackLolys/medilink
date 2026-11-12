@@ -5,6 +5,26 @@ export const needRoutes = {
     url: `${API_URL}/needs`,
     method: "GET",
   },
+  DoctorList: {
+    url: `${API_URL}/needs/doctor`,
+    method: "GET",
+  },
+  DoctorProposals: {
+    url: `${API_URL}/needs/doctor/proposals`,
+    method: "GET",
+  },
+  CancelDoctorProposal: (id: string) => ({
+    url: `${API_URL}/needs/doctor/proposals/${encodeURIComponent(id)}/cancel`,
+    method: "PATCH",
+  }),
+  DoctorDetail: (id: string) => ({
+    url: `${API_URL}/needs/doctor/${encodeURIComponent(id)}`,
+    method: "GET",
+  }),
+  DoctorProposal: (id: string) => ({
+    url: `${API_URL}/needs/doctor/${encodeURIComponent(id)}/proposals`,
+    method: "POST",
+  }),
   Create: {
     url: `${API_URL}/needs`,
     method: "POST",

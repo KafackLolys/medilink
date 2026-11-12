@@ -1,7 +1,8 @@
 import { authRoutes } from "@/routes/auth-routes";
-import { apiRequest } from "./http";
+import { apiRequest, publicApiRequest } from "./http";
 
-export type AccountRole = "patient" | "doctor";
+export type AccountRole = "patient" | "doctor" | "admin";
+export type RegisterableRole = Exclude<AccountRole, "admin">;
 
 export interface AuthenticatedUser {
   id: string;
@@ -28,7 +29,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   phone: string;
-  role: AccountRole;
+  role: RegisterableRole;
   specialty?: string;
   registrationNumber?: string;
 }
@@ -78,7 +79,7 @@ export const authService = {
    * Response: { user: { id, role, email, phone, status }, message? }
    */
   register(data: RegisterRequest): Promise<AuthResponse> {
-    return apiRequest<AuthResponse>(authRoutes.Register.url, {
+    return publicApiRequest<AuthResponse>(authRoutes.Register.url, {
       method: authRoutes.Register.method,
       body: JSON.stringify(data),
     });
@@ -90,7 +91,7 @@ export const authService = {
    * Response: { user, idToken, refreshToken, expiresIn, tokenType }
    */
   login(data: LoginRequest): Promise<LoginResponse> {
-    return apiRequest<LoginResponse>(authRoutes.Login.url, {
+    return publicApiRequest<LoginResponse>(authRoutes.Login.url, {
       method: authRoutes.Login.method,
       body: JSON.stringify(data),
     });
