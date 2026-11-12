@@ -96,10 +96,9 @@ export default function DoctorProfilePage() {
           <ReadonlyField label="Adresse e-mail" value={profile.email} />
           <ReadonlyField label="Spécialité principale" value={profile.specialty} />
           <ReadonlyField label="Spécialités secondaires" value={profile.secondarySpecialties.join(", ")} />
-          <ReadonlyField label="Années d’expérience" value={String(profile.yearsOfExperience)} />
           <ReadonlyField label="N° d’inscription professionnelle" value={profile.registrationNumber} />
           <ReadonlyField label="Diplômes" value={profile.degrees.join("\n")} multiline />
-          <div className="sm:col-span-2">
+          <div className="">
             <ReadonlyField label="Présentation professionnelle" value={profile.bio} multiline />
             <p className="mt-1 text-right text-xs text-muted">{profile.bio.length}/600 caractères</p>
           </div>

@@ -1,4 +1,5 @@
 "use client";
+import { integrationService } from "@/services/integration-service";
 
 import { LiveMedicalSections } from "./components/live-medical-sections";
 
@@ -222,6 +223,8 @@ export default function PatientProfilePage() {
   const [editedProfile, setEditedProfile] = useState<ProfileView | null>(null);
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const baseProfile: ProfileView = apiProfile
     ? toProfileView(apiProfile)
     : PATIENT_PROFILE;
@@ -246,10 +249,26 @@ export default function PatientProfilePage() {
     setSaved(false);
   }
 
-  function saveProfile(event: FormEvent<HTMLFormElement>) {
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setEditing(false);
-    setSaved(true);
+    setProfileSaveError(null);
+    setSavingProfile(true);
+    try {
+      const bloodType = ({"A+":"a_positive", "A-":"a_negative", "B+":"b_positive", "B-":"b_negative", "AB+":"ab_positive", "AB-":"ab_negative", "O+":"o_positive", "O-":"o_negative", "Inconnu":"unknown"} as Record<string,string>)[profile.bloodType];
+      const pieces = profile.location.split(",");
+      await integrationService.savePatientProfile({
+        name:profile.name, phone:profile.phone, bloodType: bloodType ?? "unknown",
+        city:pieces[0]?.trim() ?? "", district:pieces.slice(1).join(",").trim(),
+      });
+      setEditing(false);
+      setSaved(true);
+      reload();
+    } catch (cause) {
+      setProfileSaveError(cause instanceof Error ? cause.message : "Impossible d'enregistrer le profil.");
+      setSaved(false);
+    } finally {
+      setSavingProfile(false);
+    }
   }
 
   if (error || !apiProfile) {
@@ -341,6 +360,7 @@ export default function PatientProfilePage() {
             </p>
           )}
 
+          {profileSaveError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{profileSaveError}</p>}
           {editing ? (
             <form onSubmit={saveProfile} className={`${card} p-4 sm:p-6`}>
               <div className="mb-5">
@@ -381,6 +401,7 @@ export default function PatientProfilePage() {
                     required
                     type="email"
                     value={profile.email}
+                    disabled
                     onChange={(event) =>
                       updateProfile("email", event.target.value)
                     }
@@ -436,6 +457,7 @@ export default function PatientProfilePage() {
                 </button>
                 <button
                   type="submit"
+                  disabled={savingProfile}
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white hover:bg-blue-700"
                 >
                   <Check className="size-4" aria-hidden /> Enregistrer les
