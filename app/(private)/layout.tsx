@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { Footer } from "./components/footer";
 import { Header, PatientBottomNav } from "./components/header";
 import { Toaster } from "@/components/ui/use-toast";
-import { RoleGuard } from "@/components/role-guard";
 
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +13,7 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
           <Header />
         </Suspense>
         <main className="mx-auto max-w-[1160px] px-5 pb-28 pt-8 sm:px-8 lg:pb-20">
-          <RoleGuard>{children}</RoleGuard>
+          {children}
         </main>
         <Footer />
         <Suspense fallback={null}>
