@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 export function useDoctorAvailability() {
   const { toast } = useToast();
   const [weekly, setWeekly] = useState<WeeklyAvailabilityOutput[]>([]);
+  const [durationMinutes, setDurationMinutes] = useState(30);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [appointments, setAppointments] = useState<DoctorAppointmentView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,10 +25,12 @@ export function useDoctorAvailability() {
       availabilityService.getWeekly(),
       availabilityService.getBlocked(),
       availabilityService.getDoctorAppointments(),
+      availabilityService.getDuration(),
     ])
-      .then(([weeklyResult, blockedResult, appointmentsResult]) => {
+      .then(([weeklyResult, blockedResult, appointmentsResult, durationResult]) => {
         if (active) {
           setWeekly(weeklyResult);
+          setDurationMinutes(durationResult.durationMinutes);
           setBlockedDates(blockedResult);
           setAppointments(appointmentsResult);
           setLoading(false);
@@ -50,13 +53,15 @@ export function useDoctorAvailability() {
 
   return {
     weekly,
+    durationMinutes,
     blockedDates,
     appointments,
     loading,
     error,
     saveWeekly: async (availabilities: WeeklyAvailabilityInput[]) => {
       try {
-        await availabilityService.setWeekly(availabilities);
+        const result = await availabilityService.setWeekly(availabilities);
+        setWeekly(result);
         toast({
           title: "Disponibilités enregistrées",
           description: "Vos horaires hebdomadaires ont été mis à jour.",
@@ -69,6 +74,10 @@ export function useDoctorAvailability() {
         });
         throw cause;
       }
+    },
+    saveDuration: async (value: number) => {
+      const result = await availabilityService.setDuration(value);
+      setDurationMinutes(result.durationMinutes);
     },
     addBlockedDate: async (data: CreateBlockedDateInput) => {
       try {

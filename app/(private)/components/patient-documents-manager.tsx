@@ -238,6 +238,7 @@ export function PatientDocumentsManager({
           ? cause.message
           : "Impossible de supprimer ce document.",
       );
+      throw cause;
     }
   }
 

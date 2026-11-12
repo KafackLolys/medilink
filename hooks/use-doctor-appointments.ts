@@ -38,24 +38,24 @@ export function useDoctorAppointments() {
     };
   }, []);
 
-  async function updateStatus(
-    id: string,
-    status: DoctorAppointmentStatus,
-  ): Promise<void> {
-    // Mise à jour optimiste
-    setAppointments((items) =>
-      items.map((item) => (item.id === id ? { ...item, status } : item)),
-    );
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  async function updateStatus(id: string, status: DoctorAppointmentStatus): Promise<void> {
+    setUpdatingId(id);
+    setActionError(null);
     try {
       await appointmentService.updateStatus(id, status);
-    } catch {
-      // En cas d'échec, recharger pour restaurer l'état réel
-      appointmentService.listDoctor().then((data) => {
-        if (active.current) setAppointments(data);
-      });
-      throw new Error("Impossible de mettre à jour le statut du rendez-vous.");
+      const refreshed = await appointmentService.listDoctor();
+      if (active.current) setAppointments(refreshed);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "Impossible de modifier le rendez-vous.";
+      if (active.current) setActionError(message);
+      throw cause;
+    } finally {
+      if (active.current) setUpdatingId(null);
     }
   }
 
-  return { appointments, loading, error, updateStatus };
+  return { appointments, loading, error, actionError, updatingId, updateStatus };
 }

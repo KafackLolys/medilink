@@ -61,6 +61,15 @@ export const availabilityService = {
     );
   },
 
+  getDuration(): Promise<{ durationMinutes: number }> {
+    return apiRequest<{ durationMinutes: number }>(`${availabilityRoutes.Weekly.url.replace(/\/weekly$/, "")}/duration`);
+  },
+  setDuration(durationMinutes: number): Promise<{ durationMinutes: number }> {
+    return apiRequest<{ durationMinutes: number }>(`${availabilityRoutes.Weekly.url.replace(/\/weekly$/, "")}/duration`, {
+      method: "PATCH", body: JSON.stringify({ durationMinutes }),
+    });
+  },
+
   getBlocked(): Promise<BlockedDate[]> {
     return apiRequest<BlockedDate[]>(availabilityRoutes.Blocked.url, {
       method: availabilityRoutes.Blocked.method,

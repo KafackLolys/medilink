@@ -21,34 +21,33 @@ const DAYS: { id: string; day: string; weekday: Weekday }[] = [
 export default function DoctorAvailabilityPage() {
   const {
     weekly,
-    blockedDates: remoteBlockedDates,
+    durationMinutes,
+    blockedDates,
     appointments,
     loading,
     error,
     saveWeekly,
+    saveDuration,
     addBlockedDate,
     removeBlockedDate,
   } = useDoctorAvailability();
 
-  const [duration, setDuration] = useState("30");
+  const [duration, setDuration] = useState(30);
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [blockDate, setBlockDate] = useState("");
   const [blockReason, setBlockReason] = useState("");
   const [saved, setSaved] = useState(false);
-  const [schedule, setSchedule] = useState<ScheduleDay[]>(
-    weekly.map((item) => ({
-      id: item.id || item.weekday,
-      day: DAYS.find((d) => d.weekday === item.weekday)?.day || item.weekday,
-      enabled: item.isAvailable,
-      start: item.startTime,
-      end: item.endTime,
-    }))
-  );
-  const [blockedDates, setBlockedDates] = useState(remoteBlockedDates);
+  const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   useEffect(() => {
-    if (remoteBlockedDates.length > 0) {
-      setBlockedDates(remoteBlockedDates);
-    }
-  }, [remoteBlockedDates]);
+    if (loading || error) return;
+    setSchedule(DAYS.map(({ day, weekday }) => {
+      const found = weekly.find((item) => item.weekday === weekday);
+      return { id: weekday, day, enabled: found?.isAvailable ?? false,
+        start: found?.startTime ?? "09:00", end: found?.endTime ?? "17:00" };
+    }));
+    setDuration(durationMinutes);
+  }, [loading, error, weekly, durationMinutes]);
 
   if (loading) {
     return (
@@ -84,26 +83,22 @@ export default function DoctorAvailabilityPage() {
   async function handleAddBlockedDate() {
     if (!blockDate) return;
     try {
-      const created = await addBlockedDate({
-        date: blockDate,
-        reason: blockReason,
-      });
-      setBlockedDates((dates) => [...dates, created]);
+      await addBlockedDate({ date: blockDate, reason: blockReason });
       setBlockDate("");
       setBlockReason("");
       setSaved(false);
     } catch {
-      // L'erreur est déjà surfacée par la couche http / hook si nécessaire.
+      setActionError("Impossible de bloquer cette date. Vérifiez votre connexion.");
     }
   }
 
   async function handleRemoveBlockedDate(id: string) {
     try {
       await removeBlockedDate(id);
-      setBlockedDates((dates) => dates.filter((item) => item.id !== id));
+      // Le hook maintient la liste canonique.
       setSaved(false);
     } catch {
-      // Idem.
+      setActionError("Impossible de retirer cette date bloquée.");
     }
   }
 
@@ -115,11 +110,17 @@ export default function DoctorAvailabilityPage() {
       startTime: day.start,
       endTime: day.end,
     }));
+    setSaving(true);
+    setActionError(null);
     try {
       await saveWeekly(payload);
+      await saveDuration(duration);
       setSaved(true);
-    } catch {
+    } catch (cause) {
       setSaved(false);
+      setActionError(cause instanceof Error ? cause.message : "Enregistrement incomplet. Réessayez.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -135,6 +136,7 @@ export default function DoctorAvailabilityPage() {
           Vos disponibilités ont été enregistrées.
         </p>
       )}
+      {actionError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{actionError}</p>}
       {error && (
         <p className="text-sm text-rose-600">
           Impossible d'enregistrer les disponibilités. Veuillez réessayer.
@@ -195,9 +197,9 @@ export default function DoctorAvailabilityPage() {
         <label className="mt-4 block max-w-sm text-sm font-semibold text-ink">
           Durée d'une consultation
           <select
-            value={duration}
+            value={String(duration)}
             onChange={(event) => {
-              setDuration(event.target.value);
+              setDuration(Number(event.target.value));
               setSaved(false);
             }}
             className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-white px-3"
@@ -208,9 +210,7 @@ export default function DoctorAvailabilityPage() {
               </option>
             ))}
           </select>
-          <span className="text-xs text-muted block mt-1">
-            La durée est affichée à titre informatif (consultation côté profil).
-          </span>
+          <span className="text-xs text-muted block mt-1">Cette durée sera utilisée pour les prochains rendez-vous.</span>
         </label>
       </section>
 
@@ -283,7 +283,7 @@ export default function DoctorAvailabilityPage() {
         <SectionTitle>Prochains rendez-vous confirmés</SectionTitle>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {appointments
-            .filter((appointment) => appointment.status !== "Terminé")
+            .filter((appointment) => appointment.status === "confirmed")
             .slice(0, 4)
             .map((appointment) => (
               <li
@@ -312,10 +312,11 @@ export default function DoctorAvailabilityPage() {
         <button
           type="button"
           onClick={handleSave}
+          disabled={saving || schedule.length !== 7}
           className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-white hover:bg-blue-700 sm:w-auto"
         >
           <Check className="size-4" aria-hidden />
-          Enregistrer les disponibilités
+          {saving ? "Enregistrement…" : "Enregistrer les disponibilités"}
         </button>
       </div>
     </div>

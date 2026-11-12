@@ -32,7 +32,7 @@ const TONE: Record<AppointmentStatus, string> = {
 };
 
 export default function DoctorAppointmentsPage() {
-  const { appointments, loading, error, updateStatus } =
+  const { appointments, loading, error, actionError, updatingId, updateStatus } =
     useDoctorAppointments();
   const [view, setView] = useState<"list" | "calendar">("list");
 
@@ -76,14 +76,15 @@ export default function DoctorAppointmentsPage() {
   ).length;
 
   function handleSetStatus(id: string, status: AppointmentStatus) {
-    updateStatus(id, status).catch(() => {
-      // L'erreur est déjà gérée par le hook (rechargement + toast implicite).
+    void updateStatus(id, status).catch(() => {
+      // Le hook expose l'erreur dans actionError, sans modifier l'état affiché.
     });
   }
 
   return (
     <div className="space-y-5">
       <DoctorPageHeading title="Rendez-vous" description="Consultez votre agenda, répondez aux demandes et suivez vos consultations." action={<a href="/medecin/disponibilites" className="inline-flex h-10 items-center justify-center gap-2 self-start rounded-xl bg-primary px-4 text-sm font-bold text-white">Gérer mes disponibilités</a>} />
+      {actionError && <p role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{actionError}</p>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Résumé des rendez-vous">
         {[
           ["À confirmer", pendingCount],
@@ -97,7 +98,7 @@ export default function DoctorAppointmentsPage() {
       </div>
       {view === "calendar" && (
         <section className={`${doctorCard} p-4 sm:p-5`}>
-          <div className="flex items-center justify-between"><h2 className="text-lg font-extrabold text-night">Semaine du 9 au 15 novembre 2026</h2><CalendarDays className="size-5 text-primary" aria-hidden /></div>
+          <div className="flex items-center justify-between"><h2 className="text-lg font-extrabold text-night">Agenda des rendez-vous</h2><CalendarDays className="size-5 text-primary" aria-hidden /></div>
           <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {appointments.filter((item) => !["cancelled", "rejected"].includes(item.status)).map((item) => <article key={item.id} className="rounded-xl border border-slate-100 p-3"><p className="text-xs font-bold text-primary">{item.date} · {item.time}</p><p className="mt-1 truncate text-sm font-bold text-ink">{item.patient}</p><p className="text-xs text-muted">{item.district} · {item.mode}</p><span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-bold ${TONE[item.status]}`}>{STATUS_LABEL[item.status]}</span></article>)}
           </div>
@@ -106,9 +107,7 @@ export default function DoctorAppointmentsPage() {
       {view === "list" && (
         <ul className="space-y-3">
           {appointments.map((appointment) => {
-            const pending = ["pending_confirmation", "confirmed"].includes(
-              appointment.status,
-            );
+            const pending = appointment.status === "pending_confirmation";
             return <li key={appointment.id} className={`${doctorCard} p-4 sm:p-5`}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-blue-50 text-primary"><CalendarDays className="size-6" aria-hidden /></span>
@@ -117,8 +116,8 @@ export default function DoctorAppointmentsPage() {
                   <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted"><span className="inline-flex items-center gap-1"><CalendarDays className="size-4" aria-hidden />{appointment.date} · {appointment.time}</span><span className="inline-flex items-center gap-1">{appointment.mode === "À domicile" ? <House className="size-4" aria-hidden /> : <Video className="size-4" aria-hidden />}{appointment.mode}</span><span>{appointment.district}</span></p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {pending && <><button type="button" onClick={() => handleSetStatus(appointment.id, "confirmed")} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-sm font-bold text-white"><Check className="size-4" aria-hidden />Confirmer</button><button type="button" onClick={() => handleSetStatus(appointment.id, "rejected")} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-slate-100 px-3 text-sm font-semibold text-ink"><X className="size-4" aria-hidden />Refuser</button></>}
-                  {appointment.status === "confirmed" && <button type="button" onClick={() => handleSetStatus(appointment.id, "completed")} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-blue-50 px-3 text-sm font-bold text-primary"><Check className="size-4" aria-hidden />Terminer la consultation</button>}
+                  {pending && <><button type="button" disabled={updatingId !== null} onClick={() => handleSetStatus(appointment.id, "confirmed")} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-sm font-bold text-white"><Check className="size-4" aria-hidden />Confirmer</button><button type="button" disabled={updatingId !== null} onClick={() => handleSetStatus(appointment.id, "rejected")} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-slate-100 px-3 text-sm font-semibold text-ink"><X className="size-4" aria-hidden />Refuser</button></>}
+                  {appointment.status === "confirmed" && <button type="button" disabled={updatingId !== null} onClick={() => handleSetStatus(appointment.id, "completed")} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-blue-50 px-3 text-sm font-bold text-primary"><Check className="size-4" aria-hidden />Terminer la consultation</button>}
                 </div>
               </div>
               {pending && <p className="mt-3 flex items-center gap-1.5 text-xs text-muted"><Clock3 className="size-3.5" aria-hidden />Les informations personnelles complètes seront disponibles après confirmation.</p>}

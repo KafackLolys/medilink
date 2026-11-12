@@ -1,7 +1,7 @@
 export type Availability = "today" | "week" | "later";
 export type DoctorListing = {
   id: string; name: string; initials: string; color: string; specialty: string; years: number; rating: number; reviews: number;
-  area: string; distanceKm: number; availability: Availability; availabilityLabel: string; modes: string[]; pin: { x: number; y: number };
+  area: string; distanceKm: number; availability: Availability; availabilityLabel: string; modes: string[]; pin: { x: number; y: number }; coordinates?: { latitude: number; longitude: number };
 };
 
 export const SPECIALTIES = ["Médecine générale", "Pédiatrie", "Cardiologie", "Dermatologie", "Gynécologie", "Neurologie", "Kinésithérapie", "Autre"];

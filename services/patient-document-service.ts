@@ -20,8 +20,6 @@ export interface PatientDocument {
   dataUrl?: string | null;
 }
 
-const STORAGE_KEY = "medilink_patient_documents_cache";
-
 export const documentTypeLabels: Record<PatientDocumentType, string> = {
   prescription: "Ordonnance médicale",
   lab_result: "Résultats d’analyse",
@@ -58,150 +56,28 @@ export const documentTypeColors: Record<PatientDocumentType, { badge: string; ic
   },
 };
 
-const DEFAULT_DOCUMENTS: PatientDocument[] = [
-  {
-    id: "doc-sample-1",
-    type: "prescription",
-    title: "Ordonnance traitement hypertension",
-    filename: "ordonnance-dr-nguema-nov2026.pdf",
-    mimeType: "application/pdf",
-    sizeBytes: 245 * 1024,
-    uploadedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    downloadUrl: null,
-  },
-  {
-    id: "doc-sample-2",
-    type: "lab_result",
-    title: "Bilan sanguin complet & glycémie",
-    filename: "bilan-sanguin-labo-centre.pdf",
-    mimeType: "application/pdf",
-    sizeBytes: 1048 * 1024,
-    uploadedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    downloadUrl: null,
-  },
-  {
-    id: "doc-sample-3",
-    type: "medical_report",
-    title: "Compte-rendu consultation cardiologique",
-    filename: "compte-rendu-cardio-oct2026.pdf",
-    mimeType: "application/pdf",
-    sizeBytes: 520 * 1024,
-    uploadedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-    downloadUrl: null,
-  },
-  {
-    id: "doc-sample-4",
-    type: "imaging",
-    title: "Radiographie pulmonaire",
-    filename: "radio-poumons-sept2026.jpg",
-    mimeType: "image/jpeg",
-    sizeBytes: 2400 * 1024,
-    uploadedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
-    downloadUrl: null,
-  },
-];
-
-function getLocalDocuments(): PatientDocument[] {
-  if (typeof window === "undefined") return DEFAULT_DOCUMENTS;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_DOCUMENTS));
-      return DEFAULT_DOCUMENTS;
-    }
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : DEFAULT_DOCUMENTS;
-  } catch {
-    return DEFAULT_DOCUMENTS;
-  }
-}
-
-function saveLocalDocuments(docs: PatientDocument[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(docs));
-  } catch {
-    // Ignore storage quota errors
-  }
-}
-
 export const patientDocumentService = {
-  async list(): Promise<PatientDocument[]> {
-    try {
-      const remote = await apiRequest<PatientDocument[]>(patientRoutes.MyDocuments.url, {
-        method: patientRoutes.MyDocuments.method,
-      });
-      if (Array.isArray(remote)) {
-        saveLocalDocuments(remote);
-        return remote;
-      }
-    } catch {
-      // Backend offline or token missing: gracefully fallback to cached/sample documents
+  list(): Promise<PatientDocument[]> {
+    // One-time privacy cleanup of the former cross-account medical file cache.
+    if (typeof window !== "undefined") {
+      try { window.localStorage.removeItem("medilink_patient_documents_cache"); } catch { /* unavailable */ }
     }
-    return getLocalDocuments();
-  },
-
-  async upload(
-    file: File,
-    type: PatientDocumentType,
-    title?: string,
-  ): Promise<PatientDocument> {
-    const docTitle = title?.trim() || file.name.replace(/\.[^/.]+$/, "");
-
-    try {
-      const body = new FormData();
-      body.append("file", file, file.name);
-      body.append("type", type);
-      if (title) body.append("title", title.trim());
-
-      const remote = await apiRequest<PatientDocument>(patientRoutes.UploadDocument.url, {
-        method: patientRoutes.UploadDocument.method,
-        body,
-      });
-      if (remote && remote.id) {
-        const current = getLocalDocuments();
-        saveLocalDocuments([remote, ...current.filter((d) => d.id !== remote.id)]);
-        return remote;
-      }
-    } catch {
-      // Fallback for offline or local preview
-    }
-
-    // Convert file to local preview dataUrl
-    const dataUrl = await new Promise<string | null>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(file);
+    return apiRequest<PatientDocument[]>(patientRoutes.MyDocuments.url, {
+      method: patientRoutes.MyDocuments.method,
     });
-
-    const localDoc: PatientDocument = {
-      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      type,
-      title: docTitle,
-      filename: file.name,
-      mimeType: file.type || "application/octet-stream",
-      sizeBytes: file.size,
-      uploadedAt: new Date().toISOString(),
-      downloadUrl: dataUrl,
-      dataUrl,
-    };
-
-    const current = getLocalDocuments();
-    saveLocalDocuments([localDoc, ...current]);
-    return localDoc;
   },
-
-  async delete(id: string): Promise<void> {
-    try {
-      const route = patientRoutes.DeleteDocument(id);
-      await apiRequest<void>(route.url, { method: route.method });
-    } catch {
-      // Local fallback removal even if backend call fails
-    }
-    const current = getLocalDocuments();
-    const filtered = current.filter((doc) => doc.id !== id);
-    saveLocalDocuments(filtered);
+  upload(file: File, type: PatientDocumentType, title?: string): Promise<PatientDocument> {
+    const body = new FormData();
+    body.append("file", file, file.name);
+    body.append("type", type);
+    if (title?.trim()) body.append("title", title.trim());
+    return apiRequest<PatientDocument>(patientRoutes.UploadDocument.url, {
+      method: patientRoutes.UploadDocument.method,
+      body,
+    });
+  },
+  delete(id: string): Promise<void> {
+    const route = patientRoutes.DeleteDocument(id);
+    return apiRequest<void>(route.url, { method: route.method });
   },
 };
-

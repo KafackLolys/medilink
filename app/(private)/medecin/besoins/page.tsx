@@ -6,6 +6,7 @@ import type { DoctorNeedFilters } from "@/services/need-service";
 import { ArrowRight, List, Map, MapPin, Search, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { GeoMap } from "../../components/geo-map";
 
 const priorityLabels: Record<NonNullable<DoctorNeedFilters["priority"]>, string> = {
   emergency: "Élevée",
@@ -122,18 +123,17 @@ export default function DoctorNeedsPage() {
       </div>
 
       {view === "map" && (
-        <div className={`${doctorCard} flex min-h-40 flex-col items-center justify-center gap-2 p-8 text-center text-muted`}>
-          <MapPin className="size-7 text-primary" aria-hidden />
-          <p className="font-semibold text-ink">La carte nécessite des coordonnées géographiques.</p>
-          <p className="text-sm">Les demandes ne contiennent actuellement que la ville et le quartier. Consultez-les dans la liste sans distance estimée.</p>
-        </div>
+        <GeoMap points={items.flatMap(need => need.publicLocation ? [{
+          id: need.id, title: need.title, latitude: need.publicLocation.latitude,
+          longitude: need.publicLocation.longitude, href: `/medecin/besoins/${need.id}`,
+        }] : [])} emptyMessage="Aucun centre géographique de quartier n'est encore renseigné. Les demandes restent consultables dans la liste." />
       )}
 
       {loading ? (
         <div role="status" className={`${doctorCard} p-10 text-center text-muted`}>Chargement des demandes…</div>
       ) : items.length === 0 ? (
         <div className={`${doctorCard} p-10 text-center text-muted`}>{Object.values(activeFilters).some(Boolean) ? "Aucune demande ne correspond à ces filtres." : "Aucune demande disponible pour le moment."}</div>
-      ) : (
+      ) : view === "map" ? null : (
         <ul className="grid gap-3 xl:grid-cols-2">
           {items.map((need) => (
             <li key={need.id} className={`${doctorCard} flex min-w-0 flex-col gap-3 p-4 sm:p-5`}>

@@ -64,6 +64,7 @@ export interface DoctorNeedListItem {
   publishedAt: string;
   availableFrom: string | null;
   documentsCount: number;
+  publicLocation?: { latitude: number; longitude: number } | null;
 }
 
 export interface PaginatedDoctorNeeds {
