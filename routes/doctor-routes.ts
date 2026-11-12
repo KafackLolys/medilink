@@ -5,6 +5,14 @@ export const doctorRoutes = {
     url: `${API_URL}/doctors/me`,
     method: "GET",
   },
+  MyDocuments: {
+    url: `${API_URL}/doctors/me/documents`,
+    method: "POST",
+  },
+  DeleteMyDocument: (id: string) => ({
+    url: `${API_URL}/doctors/me/documents/${encodeURIComponent(id)}`,
+    method: "DELETE",
+  }),
   List: {
     url: `${API_URL}/doctors`,
     method: "GET",

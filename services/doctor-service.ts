@@ -32,13 +32,24 @@ export interface DoctorOwnProfile extends DoctorDirectoryItem {
   secondarySpecialties: string[];
   degrees: string[];
   verificationStatus: "pending" | "verified" | "rejected" | "suspended";
-  documents: Array<{
-    id: string;
-    name: string;
-    filename: string;
-    status: string;
-  }>;
+  documents: DoctorVerificationDocument[];
   completedConsultations: number;
+}
+
+export type ProfessionalDocumentType =
+  | "medical_license"
+  | "medical_degree"
+  | "identity_document"
+  | "other";
+
+export interface DoctorVerificationDocument {
+  id: string;
+  medicalDocumentId: string;
+  name: ProfessionalDocumentType;
+  filename: string;
+  status: "pending" | "approved" | "rejected";
+  sizeBytes: number;
+  downloadUrl: string | null;
 }
 
 export interface DoctorDirectoryResult {
@@ -57,6 +68,24 @@ export const doctorService = {
     return apiRequest<DoctorOwnProfile>(doctorRoutes.MyProfile.url, {
       method: doctorRoutes.MyProfile.method,
     });
+  },
+
+  uploadMyDocument(
+    file: File,
+    type: ProfessionalDocumentType,
+  ): Promise<DoctorVerificationDocument> {
+    const body = new FormData();
+    body.append("file", new Blob([file], { type: file.type }), file.name);
+    body.append("type", type);
+    return apiRequest<DoctorVerificationDocument>(doctorRoutes.MyDocuments.url, {
+      method: doctorRoutes.MyDocuments.method,
+      body,
+    });
+  },
+
+  deleteMyDocument(id: string): Promise<void> {
+    const route = doctorRoutes.DeleteMyDocument(id);
+    return apiRequest<void>(route.url, { method: route.method });
   },
 
   list(filters: DoctorFilters = {}): Promise<DoctorDirectoryResult> {

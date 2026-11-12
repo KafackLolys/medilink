@@ -97,8 +97,8 @@ export default function DoctorMessagesPage() {
                 <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-bold text-night">{messaging.selected.peerName}</h2><p className="truncate text-xs text-muted">{messaging.selected.requestTitle}</p></div>
                 <Link href={`/medecin/besoins/${messaging.selected.requestId}`} className="text-xs font-bold text-primary hover:underline">Voir le besoin</Link>
               </header>
-              <ul className="flex-1 space-y-3 overflow-y-auto bg-slate-50/60 p-4 sm:p-6">
-                {messaging.messagesLoading && <li className="text-center text-sm text-muted">Chargement des messages…</li>}
+              <ul className="relative flex-1 space-y-3 overflow-y-auto bg-slate-50/60 p-4 sm:p-6">
+                {messaging.messagesLoading && <li className="text-center text-sm text-muted  absolute top-0 left-1/2 -translate-x-1/2">Chargement des messages…</li>}
                 {!messaging.messagesLoading && messaging.messages.length === 0 && <li className="text-center text-sm text-muted">Aucun message. Envoyez le premier message de la conversation.</li>}
                 {messaging.messages.map((message) => {
                   const mine = message.senderUserId === session?.user.id;

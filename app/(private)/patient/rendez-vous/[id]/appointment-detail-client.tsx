@@ -83,7 +83,7 @@ export default function AppointmentDetailClient({ id }: { id: string }) {
       </article>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Link href="/patient/messages" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-semibold text-white"><MessageCircle className="size-4" aria-hidden />Contacter le médecin</Link>
+        <Link href="/patient/profil?activeContent=messages&tab=messages" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-semibold text-white"><MessageCircle className="size-4" aria-hidden />Contacter le médecin</Link>
         <Link href="/patient/rendez-vous" className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 font-semibold text-ink shadow-sm">Retour à mes rendez-vous</Link>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { doctorCard, DoctorPageHeading, SectionTitle } from "../../components/do
 import { useMyDoctorProfile } from "@/hooks/use-my-doctor-profile";
 import { ArrowRight, BadgeCheck, BriefcaseMedical, FileCheck2, MapPin, ShieldCheck, Star, UserRound } from "lucide-react";
 import Link from "next/link";
+import { DoctorDocumentsManager } from "../../components/doctor-documents-manager";
 
 const fieldClass = "mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-ink";
 const verificationLabels = {
@@ -12,18 +13,6 @@ const verificationLabels = {
   rejected: "Vérification refusée",
   suspended: "Compte suspendu",
 } as const;
-const documentLabels: Record<string, string> = {
-  medical_license: "Inscription à l’Ordre des médecins",
-  medical_degree: "Diplôme médical",
-  identity_document: "Pièce d’identité",
-  other: "Autre document",
-};
-const documentStatusLabels: Record<string, string> = {
-  pending: "En attente",
-  approved: "Vérifié",
-  rejected: "Refusé",
-};
-
 function ReadonlyField({
   label,
   value,
@@ -128,27 +117,7 @@ export default function DoctorProfilePage() {
 
       <section className={`${doctorCard} p-4 sm:p-5`}>
         <SectionTitle><><FileCheck2 className="mr-2 inline size-5 text-primary" aria-hidden />Documents justificatifs</></SectionTitle>
-        {profile.documents.length > 0 ? (
-          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-            {profile.documents.map((document) => {
-              const isApproved = document.status === "approved";
-              return (
-                <li key={document.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-100 p-3">
-                  <FileCheck2 className={`size-5 shrink-0 ${isApproved ? "text-emerald-600" : "text-primary"}`} aria-hidden />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold text-ink">{documentLabels[document.name] ?? document.name}</span>
-                    <span className="block truncate text-xs text-muted">{document.filename}</span>
-                  </span>
-                  <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${isApproved ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>
-                    {documentStatusLabels[document.status] ?? document.status}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-muted">Aucun document justificatif n’est associé à votre dossier.</p>
-        )}
+        <DoctorDocumentsManager initialDocuments={profile.documents} />
         <p className="mt-2 text-xs text-muted">La vérification des documents est réalisée par l’équipe MedLink.</p>
       </section>
 

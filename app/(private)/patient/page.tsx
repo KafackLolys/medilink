@@ -51,7 +51,7 @@ export default function PatientDashboard() {
             </div>
             <div className="flex gap-3 sm:flex-col">
               <Link href="/patient/rendez-vous" className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-primary px-6 sm:w-44 sm:flex-none font-semibold text-white">Voir le détail</Link>
-              <Link href="/patient/messages" className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-surface px-6 sm:w-44 sm:flex-none font-semibold text-ink"><MessageCircle className="size-4" aria-hidden />Écrire</Link>
+              <Link href="/patient/profil?activeContent=messages&tab=messages" className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-surface px-6 sm:w-44 sm:flex-none font-semibold text-ink"><MessageCircle className="size-4" aria-hidden />Écrire</Link>
             </div>
           </div>
         ) : (

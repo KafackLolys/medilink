@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { notificationService, type NotificationPage } from "@/services/notification-service";
 import { isWebPushConfigured, listenForWebPush } from "@/services/web-push";
 import { authStore } from "@/store/auth-store";
+import { useNotificationStore } from "@/store/notification-store";
 
 const EMPTY_PAGE: NotificationPage = {
   items: [],
@@ -30,17 +31,24 @@ export function useNotifications(pageSize = 20, poll = false) {
   const markRead = useCallback(async (id: string) => {
     try {
       await notificationService.markRead(id);
-      setResult((current) => ({
-        ...current,
-        unreadCount: Math.max(
+      setResult((current) => {
+        const nextItems = current.items.map((item) =>
+          item.id === id ? { ...item, readAt: new Date().toISOString() } : item,
+        );
+        const nextUnread = Math.max(
           0,
           current.unreadCount -
             (current.items.some((item) => item.id === id && !item.readAt) ? 1 : 0),
-        ),
-        items: current.items.map((item) =>
-          item.id === id ? { ...item, readAt: new Date().toISOString() } : item,
-        ),
-      }));
+        );
+        useNotificationStore
+          .getState()
+          .updateCountsFromNotifications(nextItems, nextUnread);
+        return {
+          ...current,
+          unreadCount: nextUnread,
+          items: nextItems,
+        };
+      });
       setError(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Impossible de marquer cette notification comme lue.");
@@ -51,11 +59,17 @@ export function useNotifications(pageSize = 20, poll = false) {
     try {
       await notificationService.markAllRead();
       const readAt = new Date().toISOString();
-      setResult((current) => ({
-        ...current,
-        unreadCount: 0,
-        items: current.items.map((item) => ({ ...item, readAt })),
-      }));
+      setResult((current) => {
+        const nextItems = current.items.map((item) => ({ ...item, readAt }));
+        useNotificationStore
+          .getState()
+          .updateCountsFromNotifications(nextItems, 0);
+        return {
+          ...current,
+          unreadCount: 0,
+          items: nextItems,
+        };
+      });
       setError(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Impossible de marquer les notifications comme lues.");
@@ -75,13 +89,22 @@ export function useNotifications(pageSize = 20, poll = false) {
       const session = authStore.getState().session;
       if (!session) {
         setResult(EMPTY_PAGE);
+        useNotificationStore.getState().updateCountsFromNotifications([], 0);
         setLoading(false);
         return;
       }
       notificationService
         .list(page, pageSize)
         .then((response) => {
-          if (active) setResult(response);
+          if (active) {
+            setResult(response);
+            useNotificationStore
+              .getState()
+              .updateCountsFromNotifications(
+                response.items,
+                response.unreadCount,
+              );
+          }
         })
         .catch((cause: unknown) => {
           if (active) {
@@ -135,8 +158,13 @@ export function useNotifications(pageSize = 20, poll = false) {
     };
   }, [page, pageSize, poll, reloadKey]);
 
+  const unreadMessagesCount = useNotificationStore(
+    (state) => state.unreadMessagesCount,
+  );
+
   return {
     ...result,
+    unreadMessagesCount,
     loading,
     error,
     page,
