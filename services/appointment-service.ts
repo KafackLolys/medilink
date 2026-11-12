@@ -35,10 +35,38 @@ export interface CreateAppointmentRequest {
   reason?: string;
 }
 
+export type DoctorAppointmentStatus =
+  | "pending_confirmation"
+  | "confirmed"
+  | "completed"
+  | "cancelled"
+  | "rejected"
+  | "no_show";
+
+export interface DoctorAppointment {
+  id: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  patient: string;
+  district: string | null;
+  mode: "À domicile" | "Téléconsultation";
+  status: DoctorAppointmentStatus;
+}
+
+export interface UpdateAppointmentStatusRequest {
+  status: DoctorAppointmentStatus;
+}
+
 export const appointmentService = {
   listMine(): Promise<PatientAppointment[]> {
     return apiRequest<PatientAppointment[]>(appointmentRoutes.List.url, {
       method: appointmentRoutes.List.method,
+    });
+  },
+
+  listDoctor(): Promise<DoctorAppointment[]> {
+    return apiRequest<DoctorAppointment[]>(appointmentRoutes.DoctorList.url, {
+      method: appointmentRoutes.DoctorList.method,
     });
   },
 
@@ -57,5 +85,16 @@ export const appointmentService = {
         body: JSON.stringify(request),
       },
     );
+  },
+
+  updateStatus(
+    id: string,
+    status: DoctorAppointmentStatus,
+  ): Promise<{ id: string; status: string }> {
+    const route = appointmentRoutes.UpdateStatus(id);
+    return apiRequest<{ id: string; status: string }>(route.url, {
+      method: route.method,
+      body: JSON.stringify({ status }),
+    });
   },
 };

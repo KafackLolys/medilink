@@ -5,6 +5,10 @@ export const appointmentRoutes = {
     url: `${API_URL}/appointments`,
     method: "GET",
   },
+  DoctorList: {
+    url: `${API_URL}/appointments/doctor`,
+    method: "GET",
+  },
   Detail: (id: string) => ({
     url: `${API_URL}/appointments/${encodeURIComponent(id)}`,
     method: "GET",
@@ -13,4 +17,8 @@ export const appointmentRoutes = {
     url: `${API_URL}/appointments`,
     method: "POST",
   },
+  UpdateStatus: (id: string) => ({
+    url: `${API_URL}/appointments/${encodeURIComponent(id)}/status`,
+    method: "PATCH",
+  }),
 };

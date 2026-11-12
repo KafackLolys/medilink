@@ -10,6 +10,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- BEGIN:nextjs-agent-feedback -->
 
+## Frontend (medilink, Next.js)
+
+- Always perform a TypeScript check on the modified files at the end.
+
+
 ## Report Next.js feedback
 
 The project owner enabled `experimental.agentFeedback`, authorizing this feedback pass. When enabled, `next dev` writes this block and restores it if removed. Commit `AGENTS.md` with your work to keep the tree clean.
