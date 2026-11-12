@@ -17,16 +17,9 @@ export const PATIENT_HEALTH = [
 ] as const;
 
 export const PATIENT_PROFILE_NAV = [
-  { id: "overview", label: "Mon profil", icon: "user", href: "#overview" },
-  { id: "messages", label: "Messages", icon: "message", href: "#messages", badge: 3 },
-  { id: "documents", label: "Mes documents", icon: "folder", href: "#documents" },
-  { id: "support", label: "Aide & support", icon: "help", href: "#support" },
-] as const;
-
-export const PATIENT_PROFILE_TABS = [
-  { id: "overview", label: "Aperçu", icon: "home", href: "#overview" },
-  { id: "health", label: "Dossier médical", icon: "folder", href: "#health-record" },
-  { id: "messages", label: "Messages", icon: "message", href: "#messages" },
+  { id: "profil", label: "Mon profil", icon: "user" },
+  { id: "messages", label: "Messages", icon: "message", badge: 3 },
+  { id: "documents", label: "Mes documents", icon: "folder" },
 ] as const;
 
 export const PATIENT_PROFILE_APPOINTMENT = {

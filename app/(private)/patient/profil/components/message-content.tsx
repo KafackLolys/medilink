@@ -1,50 +1,18 @@
 "use client";
 
-import { PATIENT_PROFILE_MESSAGES } from "@/lib/patient-profile-data";
 import { ArrowLeft, Bell, Check, MessageCircle, Send, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
-import { registerWebPush, isWebPushConfigured } from "@/services/web-push";
-import { ApiError } from "@/services/http";
+import { useMessaging } from "@/hooks/use-messaging";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
-type Message = { id: string; text: string; from: "doctor" | "patient"; when: string };
-
-const conversations = [
-  {
-    id: "doctor",
-    name: PATIENT_PROFILE_MESSAGES[0].sender,
-    preview: PATIENT_PROFILE_MESSAGES[0].text,
-    when: PATIENT_PROFILE_MESSAGES[0].when,
-    messages: [
-      { id: "d1", text: "Bonjour, je vous confirme notre prochain rendez-vous.", from: "doctor", when: "Aujourd’hui, 10:30" },
-      { id: "p1", text: "Merci Docteur, je serai disponible.", from: "patient", when: "Aujourd’hui, 10:42" },
-      { id: "d2", text: "Parfait. N’hésitez pas à me signaler tout changement d’ici là.", from: "doctor", when: "Aujourd’hui, 11:05" },
-    ] satisfies Message[],
-  },
-  {
-    id: "support",
-    name: PATIENT_PROFILE_MESSAGES[1].sender,
-    preview: PATIENT_PROFILE_MESSAGES[1].text,
-    when: PATIENT_PROFILE_MESSAGES[1].when,
-    messages: [
-      { id: "s1", text: PATIENT_PROFILE_MESSAGES[1].text, from: "doctor", when: PATIENT_PROFILE_MESSAGES[1].when },
-    ] satisfies Message[],
-  },
-];
-
-export default function PatientMessagesPage() {
-  const [selectedId, setSelectedId] = useState(conversations[0].id);
+export function PatientMessagesContent() {
   const [tab, setTab] = useState<"messages" | "notifications">("messages");
-  const [messagesByConversation, setMessagesByConversation] = useState<Record<string, Message[]>>(
-    Object.fromEntries(conversations.map((conversation) => [conversation.id, conversation.messages])),
-  );
   const [draft, setDraft] = useState("");
   const notifications = useNotifications(20);
-  const [pushLoading, setPushLoading] = useState(false);
-  const [pushMessage, setPushMessage] = useState<string | null>(null);
-  const selected = conversations.find((conversation) => conversation.id === selectedId) ?? conversations[0];
-  const messages = messagesByConversation[selected.id] ?? selected.messages;
+  const messaging = useMessaging();
+  const session = useAuthSession();
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -54,43 +22,16 @@ export default function PatientMessagesPage() {
     });
   }, []);
 
-  async function enablePush() {
-    setPushLoading(true);
-    setPushMessage(null);
-    try {
-      await registerWebPush();
-      setPushMessage("Les notifications push sont activées sur cet appareil.");
-    } catch (cause) {
-      setPushMessage(
-        cause instanceof ApiError || cause instanceof Error
-          ? cause.message
-          : "Impossible d’activer les notifications push.",
-      );
-    } finally {
-      setPushLoading(false);
-    }
-  }
-
-  function sendMessage(event: FormEvent<HTMLFormElement>) {
+  async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = draft.trim();
-    if (!text) return;
-    setMessagesByConversation((current) => ({
-      ...current,
-      [selected.id]: [
-        ...(current[selected.id] ?? selected.messages),
-        { id: `${selected.id}-${Date.now()}`, text, from: "patient", when: "À l’instant" },
-      ],
-    }));
-    setDraft("");
+    if (!text || !messaging.selected) return;
+    if (await messaging.send(text)) setDraft("");
   }
 
   return (
     <div className="space-y-6">
       <header>
-        <Link href="/patient" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
-          <ArrowLeft className="size-4" aria-hidden /> Tableau de bord
-        </Link>
         <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-night sm:text-4xl">Messages</h1>
         <p className="mt-2 text-lg text-muted">Échangez avec les médecins et l’équipe MedLink.</p>
       </header>
@@ -102,15 +43,6 @@ export default function PatientMessagesPage() {
 
       {tab === "notifications" ? (
         <div className="space-y-4">
-          <section className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white p-4 shadow-sm" aria-label="Préférences de notification">
-            <div>
-              <p className="font-bold text-night">Notifications sur cet appareil</p>
-              <p className="mt-1 text-sm text-muted">Activez les alertes web. Chaque navigateur ou appareil est enregistré séparément.</p>
-            </div>
-            <button type="button" onClick={() => void enablePush()} disabled={!isWebPushConfigured() || pushLoading} className="h-10 rounded-xl bg-primary px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{pushLoading ? "Activation…" : "Activer les notifications"}</button>
-            {!isWebPushConfigured() && <p className="w-full text-xs text-amber-700">La configuration Firebase Web et la clé VAPID doivent être ajoutées à l’environnement du frontend.</p>}
-            {pushMessage && <p role="status" className="w-full text-sm text-muted">{pushMessage}</p>}
-          </section>
           <section className="divide-y divide-slate-100 rounded-3xl bg-white p-4 shadow-sm sm:p-5" aria-label="Notifications récentes">
             <div className="flex items-center justify-between gap-3 pb-3">
               <p className="text-sm text-muted">{notifications.unreadCount} notification(s) non lue(s)</p>
@@ -146,49 +78,55 @@ export default function PatientMessagesPage() {
       ) : (
       <section className="grid min-h-[520px] overflow-hidden rounded-3xl bg-white shadow-[0_8px_30px_-16px_rgba(30,41,59,.16)] lg:grid-cols-[300px_1fr]" aria-label="Messagerie">
         <nav aria-label="Conversations" className="border-b border-slate-100 p-3 lg:border-b-0 lg:border-r">
-          <h2 className="px-3 py-2 text-sm font-bold text-muted">VOS CONVERSATIONS</h2>
+          <h2 className="px-3 py-2 text-sm font-bold text-muted">VOS CONVERSATIONS ({messaging.conversations.length})</h2>
+          {messaging.loading ? <p className="px-3 py-2 text-sm text-muted">Chargement des conversations…</p> : messaging.conversations.length === 0 ? <p className="px-3 py-2 text-sm text-muted">Aucune conversation pour le moment. Une conversation sera créée après l’échange d’une proposition avec un médecin.</p> : null}
           <ul className="space-y-1">
-            {conversations.map((conversation) => (
+            {messaging.conversations.map((conversation) => (
               <li key={conversation.id}>
-                <button type="button" onClick={() => setSelectedId(conversation.id)} aria-pressed={selected.id === conversation.id}
-                  className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left transition ${selected.id === conversation.id ? "bg-primary/10" : "hover:bg-slate-50"}`}>
+                <button type="button" onClick={() => messaging.selectConversation(conversation.id)} aria-pressed={messaging.selectedId === conversation.id}
+                  className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left transition ${messaging.selectedId === conversation.id ? "bg-primary/10" : "hover:bg-slate-50"}`}>
                   <span className="grid size-10 shrink-0 place-items-center rounded-full bg-blue-50 text-primary"><UserRound className="size-5" aria-hidden /></span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center justify-between gap-2"><span className="truncate font-bold text-ink">{conversation.name}</span><span className="shrink-0 text-xs text-muted">{conversation.when}</span></span>
-                    <span className="mt-1 block truncate text-sm text-muted">{conversation.preview}</span>
+                    <span className="flex items-center justify-between gap-2"><span className="truncate font-bold text-ink">{conversation.peerName}</span><span className="shrink-0 text-xs text-muted">{conversation.lastMessageAt ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(conversation.lastMessageAt)) : ""}</span></span>
+                    <span className="mt-1 block truncate text-sm text-muted">{conversation.preview || conversation.requestTitle}</span>
                   </span>
+                  {conversation.unreadCount > 0 && <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">{conversation.unreadCount}</span>}
                 </button>
               </li>
             ))}
           </ul>
         </nav>
 
-        <div className="flex min-h-[420px] min-w-0 flex-col">
+        {messaging.selected ? <div className="flex min-h-[420px] min-w-0 flex-col">
           <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
             <span className="grid size-10 place-items-center rounded-full bg-blue-50 text-primary"><UserRound className="size-5" aria-hidden /></span>
-            <div><h2 className="font-bold text-ink">{selected.name}</h2><p className="text-sm text-muted">{selected.id === "doctor" ? "Médecin" : "Assistance MedLink"}</p></div>
+            <div className="min-w-0"><h2 className="truncate font-bold text-ink">{messaging.selected.peerName}</h2><p className="truncate text-sm text-muted">{messaging.selected.requestTitle}</p></div>
           </div>
 
           <ol aria-live="polite" className="flex-1 space-y-4 overflow-y-auto p-5">
-            {messages.map((message) => (
-              <li key={message.id} className={`flex ${message.from === "patient" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${message.from === "patient" ? "rounded-br-md bg-primary text-white" : "rounded-bl-md bg-surface text-ink"}`}>
-                  <p className="whitespace-pre-wrap text-sm leading-6">{message.text}</p>
-                  <p className={`mt-1 text-right text-xs ${message.from === "patient" ? "text-white/75" : "text-muted"}`}>{message.when}</p>
+            {messaging.messagesLoading && <li className="text-center text-sm text-muted">Chargement des messages…</li>}
+            {!messaging.messagesLoading && messaging.messages.length === 0 && <li className="text-center text-sm text-muted">Aucun message. Envoyez le premier message de la conversation.</li>}
+            {messaging.messages.map((message) => {
+              const mine = message.senderUserId === session?.user.id;
+              return <li key={message.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${mine ? "rounded-br-md bg-primary text-white" : "rounded-bl-md bg-surface text-ink"}`}>
+                  <p className="whitespace-pre-wrap text-sm leading-6">{message.body}</p>
+                  <p className={`mt-1 text-right text-xs ${mine ? "text-white/75" : "text-muted"}`}>{new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(message.sentAt))}</p>
                 </div>
               </li>
-            ))}
+            })}
           </ol>
 
+          {messaging.error && <p role="alert" className="px-4 pt-3 text-sm text-rose-700">{messaging.error}</p>}
           <form onSubmit={sendMessage} className="flex gap-2 border-t border-slate-100 p-4">
             <label htmlFor="message" className="sr-only">Votre message</label>
-            <input id="message" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Écrire un message…" autoComplete="off"
+            <input id="message" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Écrire un message…" autoComplete="off" maxLength={4000}
               className="h-12 min-w-0 flex-1 rounded-full border border-slate-200 px-5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10" />
-            <button type="submit" disabled={!draft.trim()} aria-label="Envoyer le message" className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-              <Send className="size-5" aria-hidden />
+            <button type="submit" disabled={!draft.trim() || messaging.sending} aria-label="Envoyer le message" className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+              {messaging.sending ? <span className="text-xs">…</span> : <Send className="size-5" aria-hidden />}
             </button>
           </form>
-        </div>
+        </div> : <div className="grid min-h-[420px] place-items-center p-6 text-center text-sm text-muted">{messaging.loading ? "Chargement…" : "Aucune conversation sélectionnée."}</div>}
       </section>
       )}
       <p className="flex items-center gap-2 text-sm text-muted"><MessageCircle className="size-4 text-primary" aria-hidden />Ne partagez pas d’informations bancaires ou de codes confidentiels dans vos messages.</p>

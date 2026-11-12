@@ -98,7 +98,7 @@ export const authService = {
   },
 
   logout(): Promise<void> {
-    return apiRequest<void>(authRoutes.Logout.url, {
+    return publicApiRequest<void>(authRoutes.Logout.url, {
       method: authRoutes.Logout.method,
     });
   },

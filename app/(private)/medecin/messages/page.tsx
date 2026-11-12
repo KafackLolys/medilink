@@ -7,17 +7,13 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useMessaging } from "@/hooks/use-messaging";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { registerWebPush, isWebPushConfigured } from "@/services/web-push";
-import { ApiError } from "@/services/http";
 
 export default function DoctorMessagesPage() {
   const [tab, setTab] = useState<"messages" | "notifications">("messages");
   const messaging = useMessaging();
   const session = useAuthSession();
   const [text, setText] = useState("");
-  const notifications = useNotifications(20);
-  const [pushLoading, setPushLoading] = useState(false);
-  const [pushMessage, setPushMessage] = useState<string | null>(null);
+  const notifications = useNotifications(20, true);
   const unreadNotifications = notifications.unreadCount;
 
   useEffect(() => {
@@ -27,23 +23,6 @@ export default function DoctorMessagesPage() {
       }
     });
   }, []);
-
-  async function enablePush() {
-    setPushLoading(true);
-    setPushMessage(null);
-    try {
-      await registerWebPush();
-      setPushMessage("Les notifications push sont activées sur cet appareil.");
-    } catch (cause) {
-      setPushMessage(
-        cause instanceof ApiError || cause instanceof Error
-          ? cause.message
-          : "Impossible d’activer les notifications push.",
-      );
-    } finally {
-      setPushLoading(false);
-    }
-  }
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,21 +40,7 @@ export default function DoctorMessagesPage() {
       </div>
 
       {tab === "notifications" ? (
-        <div className="space-y-4">
-          <section className={`${doctorCard} flex flex-wrap items-center justify-between gap-3 p-4`} aria-label="Préférences de notification">
-            <div>
-              <p className="font-bold text-night">Notifications sur cet appareil</p>
-              <p className="mt-1 text-sm text-muted">
-                Activez les alertes web. Chaque navigateur ou appareil est enregistré séparément.
-              </p>
-            </div>
-            <button type="button" onClick={() => void enablePush()} disabled={!isWebPushConfigured() || pushLoading} className="h-10 rounded-xl bg-primary px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">
-              {pushLoading ? "Activation…" : "Activer les notifications"}
-            </button>
-            {!isWebPushConfigured() && <p className="w-full text-xs text-amber-700">La configuration Firebase Web et la clé VAPID doivent être ajoutées à l’environnement du frontend.</p>}
-            {pushMessage && <p role="status" className="w-full text-sm text-muted">{pushMessage}</p>}
-          </section>
-          <section className={`${doctorCard} divide-y divide-slate-100 p-4 sm:p-5`} aria-label="Notifications récentes">
+        <section className={`${doctorCard} divide-y divide-slate-100 p-4 sm:p-5`} aria-label="Notifications récentes">
             <div className="flex items-center justify-between gap-3 pb-3">
               <p className="text-sm text-muted">{notifications.unreadCount} notification(s) non lue(s)</p>
               <button type="button" onClick={() => void notifications.markAllRead()} disabled={notifications.unreadCount === 0 || notifications.loading} className="text-sm font-bold text-primary disabled:opacity-50">Tout marquer comme lu</button>
@@ -108,8 +73,7 @@ export default function DoctorMessagesPage() {
                 <button type="button" onClick={() => notifications.goToPage(notifications.page + 1)} disabled={notifications.page >= notifications.totalPages || notifications.loading} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold disabled:opacity-50">Suivant</button>
               </div>
             </nav>
-          </section>
-        </div>
+        </section>
       ) : (
         <div className={`${doctorCard} grid min-h-[520px] overflow-hidden md:grid-cols-[280px_minmax(0,1fr)]`}>
           <aside className={`border-b border-slate-100 md:border-b-0 md:border-r ${messaging.selected ? "hidden md:block" : ""}`}>
