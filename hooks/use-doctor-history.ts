@@ -1,5 +1,7 @@
 "use client";
 
+import { doctorService } from "@/services/doctor-service";
+
 import { useEffect, useState, useRef, useMemo } from "react";
 import {
   appointmentService,
@@ -9,6 +11,9 @@ import {
 
 export function useDoctorHistory() {
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
+  const [rating, setRating] = useState<number | null>(null);
+  const [reviewsCount, setReviewsCount] = useState(0);
+  const [honoredRate, setHonoredRate] = useState<number | null>(null);
   const [period, setPeriod] = useState<"all" | "month" | "year">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,14 +21,18 @@ export function useDoctorHistory() {
 
   useEffect(() => {
     active.current = true;
-    appointmentService
-      .listDoctor()
-      .then((data) => {
+    Promise.all([appointmentService.listDoctor(), doctorService.myProfile()])
+      .then(([data, profile]) => {
         if (active.current) {
           const completed = data.filter(
             (item) => item.status === "completed",
           );
           setAppointments(completed);
+          const noShows = data.filter(item => item.status === "no_show").length;
+          const finished = completed.length + noShows;
+          setHonoredRate(finished ? Math.round(completed.length / finished * 100) : null);
+          setRating(profile.rating);
+          setReviewsCount(profile.reviewsCount);
           setLoading(false);
         }
       })
@@ -62,6 +71,7 @@ export function useDoctorHistory() {
 
   return {
     appointments: filtered,
+    rating, reviewsCount, honoredRate,
     loading,
     error,
     period,

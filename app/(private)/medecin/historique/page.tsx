@@ -32,7 +32,7 @@ const TONE: Record<AppointmentStatus, string> = {
 };
 
 export default function DoctorHistoryPage() {
-  const { appointments, loading, error, period, setPeriod } =
+  const { appointments, loading, error, period, setPeriod, rating, reviewsCount, honoredRate } =
     useDoctorHistory();
 
   if (loading) {
@@ -79,8 +79,8 @@ export default function DoctorHistoryPage() {
       {appointments.length === 0 && <div className={`${doctorCard} p-10 text-center text-muted`}>Aucune consultation terminée pour le moment.</div>}
       <div className={`${doctorCard} grid grid-cols-2 gap-3 p-4 sm:grid-cols-3`}>
         <div><p className="text-2xl font-extrabold text-night">{completedCount}</p><p className="text-xs text-muted">Consultations terminées</p></div>
-        <div><p className="text-2xl font-extrabold text-night">4,9/5</p><p className="text-xs text-muted">Note moyenne</p></div>
-        <div className="col-span-2 sm:col-span-1"><p className="text-2xl font-extrabold text-night">96 %</p><p className="text-xs text-muted">Rendez-vous honorés</p></div>
+        <div><p className="text-2xl font-extrabold text-night">{rating === null ? "—" : `${rating.toFixed(1).replace(".", ",")}/5`}</p><p className="text-xs text-muted">Note moyenne · {reviewsCount} avis</p></div>
+        <div className="col-span-2 sm:col-span-1"><p className="text-2xl font-extrabold text-night">{honoredRate === null ? "—" : `${honoredRate} %`}</p><p className="text-xs text-muted">Rendez-vous honorés</p></div>
       </div>
     </div>
   );

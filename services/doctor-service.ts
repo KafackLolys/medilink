@@ -64,6 +64,17 @@ export interface DoctorFilters {
 }
 
 export const doctorService = {
+  updateMyProfile(data: {
+    bio: string;
+    yearsOfExperience: number;
+    consultationFee: number;
+    professionalAddress: string | null;
+  }): Promise<DoctorOwnProfile> {
+    return apiRequest<DoctorOwnProfile>(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"}/doctors/me`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
   myProfile(): Promise<DoctorOwnProfile> {
     return apiRequest<DoctorOwnProfile>(doctorRoutes.MyProfile.url, {
       method: doctorRoutes.MyProfile.method,

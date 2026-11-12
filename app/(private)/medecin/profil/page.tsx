@@ -1,5 +1,7 @@
 "use client";
 
+import { DoctorProfileEditForm } from "./doctor-profile-edit-form";
+
 import { doctorCard, DoctorPageHeading, SectionTitle } from "../../components/doctor-ui";
 import { useMyDoctorProfile } from "@/hooks/use-my-doctor-profile";
 import { ArrowRight, BadgeCheck, BriefcaseMedical, FileCheck2, MapPin, ShieldCheck, Star, UserRound } from "lucide-react";
@@ -83,6 +85,8 @@ export default function DoctorProfilePage() {
           <ShieldCheck className="size-4" aria-hidden />{verificationStatus}
         </span>
       </div>
+
+      <DoctorProfileEditForm key={`${profile.id}-${profile.bio}-${profile.consultationFee}`} profile={profile} onSaved={reload} />
 
       <section className={`${doctorCard} p-4 sm:p-5`}>
         <SectionTitle><><UserRound className="mr-2 inline size-5 text-primary" aria-hidden />Informations personnelles et professionnelles</></SectionTitle>

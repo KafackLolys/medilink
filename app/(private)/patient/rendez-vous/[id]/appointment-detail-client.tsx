@@ -1,5 +1,7 @@
 "use client";
 
+import { PatientReviewForm } from "./patient-review-form";
+
 import { StatusBadge } from "@/components/custum/status-badge";
 import { usePatientAppointment } from "@/hooks/use-patient-appointment";
 import { ArrowLeft, CalendarDays, Clock, House, MessageCircle, Video } from "lucide-react";
@@ -81,6 +83,8 @@ export default function AppointmentDetailClient({ id }: { id: string }) {
           </div>
         </div>
       </article>
+
+      {appointment.status === "completed" && <PatientReviewForm appointmentId={appointment.id} />}
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <Link href="/patient/profil?activeContent=messages&tab=messages" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-semibold text-white"><MessageCircle className="size-4" aria-hidden />Contacter le médecin</Link>
