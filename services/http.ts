@@ -1,5 +1,6 @@
 import { authStore } from "@/store/auth-store";
 import { authRoutes } from "@/routes/auth-routes";
+import { clearBrowserSession } from "@/lib/client-auth-session";
 
 export class ApiError extends Error {
   constructor(
@@ -29,7 +30,7 @@ function getErrorMessage(payload: unknown, status: number): string {
 }
 
 function redirectToLogin() {
-  authStore.getState().clearSession();
+  clearBrowserSession();
   if (typeof window !== "undefined") {
     window.location.replace("/login");
   }
