@@ -156,7 +156,7 @@ export function useNotifications(pageSize = 20, poll = false) {
       if (poll) document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("medilink:notification", onPush);
     };
-  }, [page, pageSize, poll, reloadKey]);
+  }, [page, pageSize, poll, reloadKey, enabled]);
 
   const unreadMessagesCount = useNotificationStore(
     (state) => state.unreadMessagesCount,

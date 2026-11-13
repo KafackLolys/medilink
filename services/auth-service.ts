@@ -71,7 +71,19 @@ export interface PatientProfileResponse {
   };
 }
 
+export interface UpdateAdminProfileRequest {
+  firstName: string;
+  lastName: string;
+  phone: string;
+}
+
 export const authService = {
+  updateAdminProfile(data: UpdateAdminProfileRequest): Promise<{ user: AuthenticatedUser }> {
+    return apiRequest<{ user: AuthenticatedUser }>(authRoutes.UpdateAdminProfile.url, {
+      method: authRoutes.UpdateAdminProfile.method,
+      body: JSON.stringify(data),
+    });
+  },
   /**
    * POST /auth/register
    * Request: { firstName, lastName, email, phone, password, role,

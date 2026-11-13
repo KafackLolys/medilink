@@ -177,7 +177,7 @@ export function PatientBottomNav() {
   const isActive = useActive();
   return (
     <nav aria-label="Navigation mobile" className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/70 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-      <ul className={`mx-auto grid max-w-lg items-end px-2 ${admin ? "grid-cols-1" : doctor ? "grid-cols-4" : "grid-cols-5"}`}>
+      <ul className={`mx-auto grid max-w-lg items-end px-2 ${admin ? "grid-cols-2" : doctor ? "grid-cols-4" : "grid-cols-5"}`}>
         {links.map((l) => {
           const on = isActive(l);
           const center = !doctor && !admin && l.short === "Publier";

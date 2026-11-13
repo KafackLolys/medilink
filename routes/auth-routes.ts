@@ -13,6 +13,10 @@ export const authRoutes = {
     url: `${API_URL}/auth/profile`,
     method: "GET",
   },
+  UpdateAdminProfile: {
+    url: `${API_URL}/auth/admin/profile`,
+    method: "PATCH",
+  },
   Logout: {
     url: `${API_URL}/auth/logout`,
     method: 'POST',
