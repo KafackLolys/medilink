@@ -22,18 +22,28 @@ interface AuthState extends PersistedAuthState {
   clearSession: () => void;
 }
 
-const authStorage = createJSONStorage<PersistedAuthState>(() => ({
-  getItem: (name) => localStorage.getItem(name),
-  setItem: (name, value) => {
-    const persisted = JSON.parse(value) as { state?: PersistedAuthState };
-    if (persisted.state?.rememberMe) {
-      localStorage.setItem(name, value);
-    } else {
-      localStorage.removeItem(name);
-    }
-  },
-  removeItem: (name) => localStorage.removeItem(name),
-}));
+const authStorage = createJSONStorage<PersistedAuthState>(() => {
+  // Zustand can be imported during SSR. Never access localStorage on the server.
+  if (typeof window === "undefined") {
+    return {
+      getItem: () => null,
+      setItem: () => undefined,
+      removeItem: () => undefined,
+    };
+  }
+  return {
+    getItem: (name) => window.localStorage.getItem(name),
+    setItem: (name, value) => {
+      const persisted = JSON.parse(value) as { state?: PersistedAuthState };
+      if (persisted.state?.rememberMe) {
+        window.localStorage.setItem(name, value);
+      } else {
+        window.localStorage.removeItem(name);
+      }
+    },
+    removeItem: (name) => window.localStorage.removeItem(name),
+  };
+});
 
 export const authStore = create<AuthState>()(
   persist(

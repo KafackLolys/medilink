@@ -9,7 +9,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { authStore } from "@/store/auth-store";
+import { clearBrowserSession } from "@/lib/client-auth-session";
 import { authService } from "@/services/auth-service";
 import { useNotifications } from "@/hooks/use-notifications";
 import type { ActivityMessage, ActivityNotification } from "@/components/custum/activity-popover";
@@ -81,9 +81,15 @@ export function Header() {
     } catch (error) {
       console.error("Impossible de désactiver les notifications push avant la déconnexion.", error);
     }
-    await authService.logout();
-    authStore.getState().clearSession();
-    router.replace("/login");
+    try {
+      await authService.logout();
+    } catch (error) {
+      // Local sign-out must work even when the API is unreachable.
+      console.warn("Déconnexion API indisponible, session locale révoquée.", error);
+    } finally {
+      clearBrowserSession();
+      router.replace("/login");
+    }
   }
 
   return (
