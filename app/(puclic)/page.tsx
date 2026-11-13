@@ -1,5 +1,7 @@
+import { BiSolidLogInCircle } from "react-icons/bi";
 import RecommendedDoctors from "./recommended-doctors";
 import { Activity, Baby, BadgeCheck, Brain, CalendarCheck, FileText, Flower2, HeartPulse, LayoutGrid, MapPin, MessageCircle, Plus, Search, ShieldCheck, Sparkles, Stethoscope } from "lucide-react";
+import Link from "next/link";
 
 const SPECIALTIES = [
   { n: "Médecine générale", I: Stethoscope },
@@ -61,7 +63,9 @@ export default function Home() {
                 <MapPin className="size-5 text-secondary" aria-hidden />
                 <span><span className="block whitespace-nowrap text-xs font-semibold text-muted">Localisation</span><span className="block whitespace-nowrap text-[15px] text-slate-400">Ville ou quartier</span></span>
               </label>
-              <button className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary px-7 font-semibold text-white"><Search className="size-5" aria-hidden /> Rechercher</button>
+              <Link href="/login" className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-primary px-7 font-semibold text-white">
+                <BiSolidLogInCircle className="size-8" aria-hidden /> Connexion
+              </Link>
             </div>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -110,10 +114,10 @@ export default function Home() {
           <h2 className="text-2xl font-extrabold tracking-tight text-night">Quelle spécialité recherchez-vous ?</h2>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
             {SPECIALTIES.map(({ n, I }) => (
-              <a key={n} href="/login" className="flex flex-col items-center gap-3 rounded-3xl bg-white p-4 text-center shadow-[0_8px_30px_-16px_rgba(30,41,59,.15)] transition hover:-translate-y-0.5">
+              <Link key={n} href="/patient/medecins" className="flex flex-col items-center gap-3 rounded-3xl bg-white p-4 text-center shadow-[0_8px_30px_-16px_rgba(30,41,59,.15)] transition hover:-translate-y-0.5">
                 <span className="grid size-12 place-items-center rounded-2xl bg-primary/[.08] text-primary"><I className="size-6" /></span>
                 <span className="text-sm font-semibold leading-tight">{n}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
@@ -143,7 +147,9 @@ export default function Home() {
             <h2 className="text-2xl font-extrabold tracking-tight text-night">Vous ne savez pas qui contacter ?</h2>
             <p className="mt-2 text-base text-muted">Publiez votre besoin médical. Les médecins vérifiés de votre secteur vous envoient leurs propositions, vous choisissez.</p>
           </div>
-          <a href="#" className="rounded-full bg-secondary px-7 py-4 font-semibold text-white">Publier un besoin médical</a>
+          <Link href="/patient/besoins/nouveau" className="rounded-full bg-secondary px-7 py-4 font-semibold text-white">
+            Publier un besoin médical
+          </Link>
         </section>
 
         <footer className="mt-12 pb-10 text-sm text-muted">
