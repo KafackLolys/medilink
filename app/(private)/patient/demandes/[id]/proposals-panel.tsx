@@ -8,7 +8,7 @@ import { needService, type PatientProposal, type NeedStatus } from "@/services/n
 import { messageService, type ConversationMessage } from "@/services/message-service";
 import { useAuthSession } from "@/hooks/use-auth-session";
 
-type Props = { needId: string; status: NeedStatus; onAccepted: () => void };
+type Props = { needId: string; status: NeedStatus; needMode: "domicile" | "teleconsultation"; onAccepted: () => void };
 const statusLabel: Record<PatientProposal["status"], string> = {
   sent: "Envoyée", pending: "En attente", accepted: "Acceptée", rejected: "Non retenue",
   expired: "Expirée", cancelled: "Annulée",
@@ -17,7 +17,7 @@ const formatDate = (value: string) => new Intl.DateTimeFormat("fr-FR", {
   dateStyle: "medium", timeStyle: "short",
 }).format(new Date(value));
 
-export function ProposalsPanel({ needId, status, onAccepted }: Props) {
+export function ProposalsPanel({ needId, status, needMode, onAccepted }: Props) {
   const session = useAuthSession();
   const [proposals, setProposals] = useState<PatientProposal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,7 +114,7 @@ export function ProposalsPanel({ needId, status, onAccepted }: Props) {
                 <p className="mt-2 text-xs text-muted">{proposal.consultationMode === "home" ? "À domicile" : "Téléconsultation"} · Envoyée le {formatDate(proposal.proposedAt)}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {isActive && <button type="button" onClick={() => { setSelected(proposal.id); setDraft(""); }} className="inline-flex h-10 items-center gap-2 rounded-full border border-primary/20 bg-white px-4 text-sm font-bold text-primary hover:bg-blue-50"><MessageCircle className="size-4" aria-hidden /> {selected === proposal.id ? "Conversation ouverte" : "Écrire"}</button>}
-                  {canAccept && <ConfirmDialog trigger={<button type="button" className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-white"><CheckCircle2 className="size-4" aria-hidden /> Accepter</button>} title={`Accepter la proposition de ${proposal.doctor.name} ?`} description="En confirmant, ce médecin sera sélectionné pour votre demande. Toutes les autres propositions seront automatiquement refusées et ne pourront plus être acceptées. Un rendez-vous sera créé à la date proposée, sous réserve de disponibilité." confirmLabel="Confirmer mon choix" onConfirm={() => accept(proposal.id)} />}
+                  {canAccept && <ConfirmDialog trigger={<button type="button" className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-white"><CheckCircle2 className="size-4" aria-hidden /> Accepter</button>} title={`Accepter la proposition de ${proposal.doctor.name} ?`} description={`En confirmant, vous acceptez la consultation ${proposal.consultationMode === "home" ? "à domicile" : "en téléconsultation"}${(needMode === "domicile" ? "home" : "teleconsultation") !== proposal.consultationMode ? ", différente du mode initial de votre demande. Le mode de votre demande sera mis à jour." : "."} Toutes les autres propositions seront automatiquement refusées et ne pourront plus être acceptées. Un rendez-vous sera créé à la date proposée, sous réserve de disponibilité.`} confirmLabel="Confirmer mon choix" onConfirm={() => accept(proposal.id)} />}
                   <Link href={`/patient/medecins/${encodeURIComponent(proposal.doctor.id)}`} className="inline-flex h-10 items-center rounded-full bg-surface px-4 text-sm font-semibold text-ink">Voir le profil</Link>
                 </div>
               </li>;

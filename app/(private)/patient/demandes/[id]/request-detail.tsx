@@ -153,7 +153,7 @@ export default function PatientRequestDetail({ id }: { id: string }) {
         <Link href="/patient/demandes" className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 font-semibold text-ink shadow-sm">Retour à mes demandes</Link>
       </div>
       </div>
-      <ProposalsPanel needId={need.id} status={need.status} onAccepted={reload} />
+      <ProposalsPanel needId={need.id} status={need.status} needMode={need.mode} onAccepted={reload} />
       </div>
     </div>
   );
