@@ -2,9 +2,11 @@ import { Suspense } from "react";
 import { Footer } from "./components/footer";
 import { Header, PatientBottomNav } from "./components/header";
 import { Toaster } from "@/components/ui/use-toast";
+import { AuthSessionGuard } from "@/components/auth-session-guard";
 
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {
   return (
+    <AuthSessionGuard>
     <div className="relative min-h-dvh overflow-x-clip bg-surface">
       <div aria-hidden className="absolute -left-40 -top-40 size-[32rem] rounded-full bg-primary/10 blur-3xl" />
       <div aria-hidden className="absolute -right-40 top-40 size-[28rem] rounded-full bg-secondary/10 blur-3xl" />
@@ -22,5 +24,6 @@ export default function PrivateLayout({ children }: { children: React.ReactNode 
         <Toaster />
       </div>
     </div>
+    </AuthSessionGuard>
   );
 }
