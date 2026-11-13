@@ -72,7 +72,11 @@ export default function AdminPage() {
           result.items.map((account) => [
             account.id,
             {
-              status: account.status,
+              // A historical invalid users.status="verified" must not be passed
+              // to the status endpoint. Show its actionable normal value instead.
+              status: (account.status as string) === "verified"
+                ? (account.verificationStatus === "verified" ? "active" : "pending")
+                : account.status,
               emailVerified: account.emailVerified,
               verificationStatus: account.verificationStatus ?? "pending",
             },
@@ -113,7 +117,8 @@ export default function AdminPage() {
         });
       } else if (
         account.role === "doctor" &&
-        edit.verificationStatus !== account.verificationStatus
+        (edit.verificationStatus !== account.verificationStatus ||
+          ((account.status as string) === "verified" && edit.verificationStatus === "verified"))
       ) {
         await adminService.updateVerification(account.id, {
           verificationStatus: edit.verificationStatus,
