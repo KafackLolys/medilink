@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useStore } from "zustand";
 import { authStore } from "@/store/auth-store";
@@ -14,11 +14,22 @@ const ROLE_HOME = {
 
 type Role = keyof typeof ROLE_HOME;
 
+const LOADING_FALLBACK = (
+  <div role="status" className="p-8 text-center text-sm text-muted">
+    Vérification de votre session…
+  </div>
+);
+
 /**
- * Wait for Zustand persistence to hydrate before checking the browser session.
+ * Client-side auth/session guard.
+ *
+ * Split into an outer boundary (`<Suspense>`) so Next.js can prerender the
+ * private layout and stream the navigation-dependent hooks (`usePathname`,
+ * `useRouter`) after hydration instead of failing at build time.
+ *
  * A role cookie alone is never enough to render a private page.
  */
-export function AuthSessionGuard({ children }: { children: ReactNode }) {
+function AuthSessionGuardInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const session = useStore(authStore, (state) => state.session);
@@ -27,7 +38,7 @@ export function AuthSessionGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = authStore.persist.onFinishHydration(() => setHydrated(true));
-    setHydrated(authStore.persist.hasHydrated());
+    void Promise.resolve().then(() => setHydrated(authStore.persist.hasHydrated()));
     return unsubscribe;
   }, []);
 
@@ -64,4 +75,12 @@ export function AuthSessionGuard({ children }: { children: ReactNode }) {
   }
 
   return <>{children}</>;
+}
+
+export function AuthSessionGuard({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={LOADING_FALLBACK}>
+      <AuthSessionGuardInner>{children}</AuthSessionGuardInner>
+    </Suspense>
+  );
 }

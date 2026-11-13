@@ -23,7 +23,9 @@ export default function DoctorDashboard() {
 
   useEffect(() => {
     let live = true;
-    setLoading(true);
+    void Promise.resolve().then(() => {
+      if (live) setLoading(true);
+    });
     Promise.allSettled([
       doctorService.myProfile(), needService.listForDoctor({},1,5),
       needService.listProposalsForDoctor("",1,10), appointmentService.listDoctor(),
@@ -55,7 +57,7 @@ export default function DoctorDashboard() {
         <section className={card}><div className="flex items-center justify-between"><h2 className="flex items-center gap-2 text-xl font-extrabold"><Users className="size-5 text-primary"/> Demandes récentes</h2><Link href="/medecin/besoins" className="text-sm font-bold text-primary">Tout voir</Link></div>
           <ul className="mt-4 space-y-3">{needs.map(n=><li key={n.id} className="rounded-xl border border-slate-100 p-3"><h3 className="font-bold">{n.title}</h3><p className="mt-1 line-clamp-2 text-sm text-muted">{n.summary}</p><p className="mt-1 text-xs text-muted">{n.specialty} · {n.city}, {n.district}</p><Link href={`/medecin/besoins/${encodeURIComponent(n.id)}`} className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-primary">Consulter <ArrowRight className="size-4"/></Link></li>)}</ul>{needs.length===0 && <p className="mt-3 text-muted">Aucune demande disponible actuellement.</p>}
         </section>
-        <div className="space-y-5"><section className={card}><h2 className="flex items-center gap-2 text-xl font-extrabold"><CalendarDays className="size-5 text-primary"/> Rendez-vous du jour</h2><ul className="mt-4 space-y-3">{todayAppointments.map(a=><li key={a.id} className="rounded-xl bg-slate-50 p-3"><p className="font-bold">{a.time} · {a.patient}</p><p className="text-sm text-muted">{a.mode} · {a.status=== "confirmed" ? "Confirmé" : "À confirmer"}</p></li>)}</ul>{todayAppointments.length===0 && <p className="mt-3 text-sm text-muted">Aucun rendez-vous aujourd’hui.</p>}<Link href="/medecin/rendez-vous" className="mt-3 inline-block text-sm font-bold text-primary">Voir l'agenda</Link></section>
+        <div className="space-y-5"><section className={card}><h2 className="flex items-center gap-2 text-xl font-extrabold"><CalendarDays className="size-5 text-primary"/> Rendez-vous du jour</h2><ul className="mt-4 space-y-3">{todayAppointments.map(a=><li key={a.id} className="rounded-xl bg-slate-50 p-3"><p className="font-bold">{a.time} · {a.patient}</p><p className="text-sm text-muted">{a.mode} · {a.status=== "confirmed" ? "Confirmé" : "À confirmer"}</p></li>)}</ul>{todayAppointments.length===0 && <p className="mt-3 text-sm text-muted">Aucun rendez-vous aujourd’hui.</p>}<Link href="/medecin/rendez-vous" className="mt-3 inline-block text-sm font-bold text-primary">Voir l&apos;agenda</Link></section>
           <section className={card}><h2 className="text-xl font-extrabold">Actions rapides</h2><div className="mt-3 grid gap-2">{[["Voir les besoins","/medecin/besoins"],["Gérer mes disponibilités","/medecin/disponibilites"],["Modifier mon profil","/medecin/profil"],["Gérer mes zones","/medecin/zone-intervention"]].map(([label,href])=><Link key={href} href={href} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-primary">{label}</Link>)}</div></section></div>
       </div>
       <section className={card}><h2 className="flex items-center gap-2 text-lg font-extrabold"><MapPin className="size-5 text-primary"/> Informations professionnelles</h2>{profile ? <p className="mt-2 text-sm text-muted">{profile.name} · {profile.specialty} · {profile.professionalAddress ?? "Adresse non renseignée"}</p> : <p className="mt-2 text-sm text-muted">Profil indisponible.</p>}</section>

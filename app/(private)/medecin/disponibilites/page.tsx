@@ -41,12 +41,12 @@ export default function DoctorAvailabilityPage() {
   const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   useEffect(() => {
     if (loading || error) return;
-    setSchedule(DAYS.map(({ day, weekday }) => {
+    void Promise.resolve().then(() => setSchedule(DAYS.map(({ day, weekday }) => {
       const found = weekly.find((item) => item.weekday === weekday);
       return { id: weekday, day, enabled: found?.isAvailable ?? false,
         start: found?.startTime ?? "09:00", end: found?.endTime ?? "17:00" };
-    }));
-    setDuration(durationMinutes);
+    })));
+    void Promise.resolve().then(() => setDuration(durationMinutes));
   }, [loading, error, weekly, durationMinutes]);
 
   if (loading) {
@@ -139,7 +139,7 @@ export default function DoctorAvailabilityPage() {
       {actionError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{actionError}</p>}
       {error && (
         <p className="text-sm text-rose-600">
-          Impossible d'enregistrer les disponibilités. Veuillez réessayer.
+          Impossible d&apos;enregistrer les disponibilités. Veuillez réessayer.
         </p>
       )}
       <section className={`${doctorCard} p-4 sm:p-5`}>
@@ -195,7 +195,7 @@ export default function DoctorAvailabilityPage() {
           ))}
         </div>
         <label className="mt-4 block max-w-sm text-sm font-semibold text-ink">
-          Durée d'une consultation
+          Durée d&apos;une consultation
           <select
             value={String(duration)}
             onChange={(event) => {

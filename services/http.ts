@@ -148,9 +148,9 @@ export async function publicApiRequest<T>(
   url: string,
   init: RequestInit = {},
 ): Promise<T> {
-  let response = await sendRequest(url, init);
+  const response = await sendRequest(url, init);
   const body = await response.text();
-  let payload: unknown = body ? JSON.parse(body) : undefined;
+  const payload: unknown = body ? JSON.parse(body) : undefined;
 
   if (!response.ok) {
     throw new ApiError(getErrorMessage(payload, response.status), response.status);

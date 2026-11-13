@@ -26,7 +26,7 @@ export function useDoctors(filters: DoctorFilters) {
 
   useEffect(() => {
     let active = true;
-    setState({ key, status: "loading", doctors: [], error: null });
+    void Promise.resolve().then(() => { if (active) setState({ key, status: "loading", doctors: [], error: null }); });
 
     doctorService.list({ q, city, specialty })
       .then((result) => {

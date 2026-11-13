@@ -237,7 +237,7 @@ export default function PatientProfilePage() {
   useEffect(() => {
     const tab = new URLSearchParams(window.location.search).get("activeContent");
     if (tab === "documents" || tab === "messages" || tab === "profil") {
-      setActiveContent(tab);
+      void Promise.resolve().then(() => setActiveContent(tab));
     }
   }, []);
 

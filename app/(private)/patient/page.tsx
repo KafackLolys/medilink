@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { normalizePatientInternalHref } from "@/lib/message-navigation";
-import { ArrowRight, Bell, CalendarDays, FileText, Stethoscope } from "lucide-react";
+import { ArrowRight, Bell, FileText, Stethoscope } from "lucide-react";
 import { needService, type PatientNeed } from "@/services/need-service";
 import { appointmentService, type PatientAppointment } from "@/services/appointment-service";
 import { notificationService, type UserNotification } from "@/services/notification-service";
@@ -21,13 +21,14 @@ export default function PatientDashboard() {
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<string[]>([]);
   const [refresh, setRefresh] = useState(0);
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
     let live = true;
-    setLoading(true);
-    setErrors([]);
+    void Promise.resolve().then(() => { if (live) { setLoading(true); setErrors([]); } });
     Promise.allSettled([needService.list(), appointmentService.listMine(), notificationService.list(1, 5)])
       .then(([n, a, notif]) => {
+        setNow(Date.now());
         if (!live) return;
         const issues: string[] = [];
         if (n.status === "fulfilled") setNeeds(n.value); else { setNeeds([]); issues.push("demandes"); }
@@ -40,7 +41,7 @@ export default function PatientDashboard() {
   }, [refresh]);
 
   const active = needs.filter(n => ACTIVE.has(n.status));
-  const upcoming = appointments.filter(a => UPCOMING.has(a.status) && new Date(a.scheduledAt).getTime() >= Date.now())
+  const upcoming = appointments.filter(a => UPCOMING.has(a.status) && (now === null || new Date(a.scheduledAt).getTime() >= now))
     .sort((a,b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   const next = upcoming[0];
   const proposals = active.reduce((sum, need) => sum + need.interested, 0);

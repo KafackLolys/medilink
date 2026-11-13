@@ -25,8 +25,7 @@ export function LiveMedicalSections({ openDocuments }: { openDocuments: () => vo
   const [refresh, setRefresh] = useState(0);
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setErrors([]);
+    void Promise.resolve().then(() => { if (active) { setLoading(true); setErrors([]); } });
     Promise.allSettled([patientHealthService.list(), appointmentService.listMine(), needService.list()])
       .then(([health, rdv, requests]) => {
         if (!active) return;
@@ -57,6 +56,6 @@ export function LiveMedicalSections({ openDocuments }: { openDocuments: () => vo
       <div className="flex justify-between gap-2"><h2 id="requests-title" className="flex items-center gap-2 text-lg font-extrabold text-night"><ClipboardList className="size-5 text-primary"/> Mes dernières demandes</h2><Link href="/patient/demandes" className="text-sm font-bold text-primary">Voir tout <ArrowRight className="inline size-4"/></Link></div>
       {loading ? <p className="mt-3 text-muted">Chargement…</p> : recentNeeds.length === 0 ? <p className="mt-3 text-sm text-muted">Aucune demande enregistrée.</p> : <ul className="mt-3 space-y-2">{recentNeeds.map(item=><li key={item.id}><Link href={`/patient/demandes/${encodeURIComponent(item.id)}`} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 hover:bg-blue-50"><Stethoscope className="size-5 text-primary"/><span className="min-w-0 flex-1"><strong className="block truncate text-sm text-night">{item.title}</strong><small className="text-muted">{new Date(item.createdAt).toLocaleDateString("fr-FR")} · {item.interested} proposition(s)</small></span><span className="text-xs text-primary">{statusText[item.status] ?? item.status}</span></Link></li>)}</ul>}
     </section>
-    <section className={card} aria-label="Documents médicaux"><div className="flex items-center justify-between gap-2"><h2 className="flex items-center gap-2 text-lg font-extrabold text-night"><Folder className="size-5 text-primary"/> Mes documents médicaux</h2><button type="button" onClick={openDocuments} className="text-sm font-bold text-primary">Gérer mes documents <ArrowRight className="inline size-4"/></button></div><p className="mt-2 text-sm text-muted">Consultez vos documents depuis l'espace sécurisé.</p></section>
+    <section className={card} aria-label="Documents médicaux"><div className="flex items-center justify-between gap-2"><h2 className="flex items-center gap-2 text-lg font-extrabold text-night"><Folder className="size-5 text-primary"/> Mes documents médicaux</h2><button type="button" onClick={openDocuments} className="text-sm font-bold text-primary">Gérer mes documents <ArrowRight className="inline size-4"/></button></div><p className="mt-2 text-sm text-muted">Consultez vos documents depuis l&apos;espace sécurisé.</p></section>
   </>;
 }

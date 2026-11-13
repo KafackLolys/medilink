@@ -152,7 +152,7 @@ export function PatientDocumentsManager({
 
   useEffect(() => {
     if (!initialDocuments) {
-      void loadDocuments();
+      void Promise.resolve().then(() => loadDocuments());
     }
   }, [initialDocuments, loadDocuments]);
 

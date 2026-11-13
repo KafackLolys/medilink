@@ -90,4 +90,3 @@ export function Toaster() {
   );
 }
 
-export { type Toast };

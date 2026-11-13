@@ -23,7 +23,8 @@ interface AuthState extends PersistedAuthState {
 }
 
 const authStorage = createJSONStorage<PersistedAuthState>(() => {
-  // Importable on the server without using browser-only APIs.
+  // Importable et utilisable partout, y compris le SSR / Edge (middleware) :
+  // window, localStorage et sessionStorage n'existent pas côté serveur.
   if (typeof window === "undefined") {
     return {
       getItem: () => null,
@@ -33,23 +34,37 @@ const authStorage = createJSONStorage<PersistedAuthState>(() => {
   }
   return {
     // A non-remembered session survives full page navigation within the same tab.
-    getItem: (name) => window.sessionStorage.getItem(name) ?? window.localStorage.getItem(name),
+    getItem: (name) => {
+      try {
+        return window.sessionStorage.getItem(name) ?? window.localStorage.getItem(name);
+      } catch {
+        return null;
+      }
+    },
     setItem: (name, value) => {
-      const persisted = JSON.parse(value) as { state?: PersistedAuthState };
-      if (persisted.state?.rememberMe) {
-        window.localStorage.setItem(name, value);
-        window.sessionStorage.removeItem(name);
-      } else if (persisted.state?.session) {
-        window.sessionStorage.setItem(name, value);
-        window.localStorage.removeItem(name);
-      } else {
-        window.sessionStorage.removeItem(name);
-        window.localStorage.removeItem(name);
+      try {
+        const persisted = JSON.parse(value) as { state?: PersistedAuthState };
+        if (persisted.state?.rememberMe) {
+          window.localStorage.setItem(name, value);
+          window.sessionStorage.removeItem(name);
+        } else if (persisted.state?.session) {
+          window.sessionStorage.setItem(name, value);
+          window.localStorage.removeItem(name);
+        } else {
+          window.sessionStorage.removeItem(name);
+          window.localStorage.removeItem(name);
+        }
+      } catch {
+        // Stockage indisponible (navigation privée, quota bloqué, etc.) : on ignore silencieusement.
       }
     },
     removeItem: (name) => {
-      window.localStorage.removeItem(name);
-      window.sessionStorage.removeItem(name);
+      try {
+        window.localStorage.removeItem(name);
+        window.sessionStorage.removeItem(name);
+      } catch {
+        // Stockage indisponible : on ignore silencieusement.
+      }
     },
   };
 });

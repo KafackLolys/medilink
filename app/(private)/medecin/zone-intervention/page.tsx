@@ -15,7 +15,8 @@ export default function DoctorZonePage() {
   const [success,setSuccess]=useState(false);
   const [refresh,setRefresh]=useState(0);
   useEffect(()=>{
-    let live=true;setLoading(true);setError(null);
+    let live=true;
+    void Promise.resolve().then(() => { if(live) { setLoading(true); setError(null); } });
     integrationService.getDoctorZone().then(v=>{if(live)setZone(v)}).catch(e=>{if(live)setError(e instanceof Error?e.message:"Impossible de charger les zones.")}).finally(()=>{if(live)setLoading(false)});
     return ()=>{live=false};
   },[refresh]);
