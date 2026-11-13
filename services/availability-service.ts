@@ -1,6 +1,8 @@
 import { availabilityRoutes } from "@/routes/availability-routes";
 import { apiRequest } from "./http";
 
+export type ConsultationMode = "home" | "teleconsultation";
+
 export type Weekday =
   | "monday"
   | "tuesday"
@@ -43,6 +45,18 @@ export interface DoctorAppointmentView {
 }
 
 export const availabilityService = {
+  getModes(): Promise<ConsultationMode[]> {
+    return apiRequest<ConsultationMode[]>(availabilityRoutes.Modes.url, {
+      method: availabilityRoutes.Modes.method,
+    });
+  },
+
+  setModes(modes: ConsultationMode[]): Promise<ConsultationMode[]> {
+    return apiRequest<ConsultationMode[]>(availabilityRoutes.SetModes.url, {
+      method: availabilityRoutes.SetModes.method,
+      body: JSON.stringify({ modes }),
+    });
+  },
   getWeekly(): Promise<WeeklyAvailabilityOutput[]> {
     return apiRequest<WeeklyAvailabilityOutput[]>(availabilityRoutes.Weekly.url, {
       method: availabilityRoutes.Weekly.method,

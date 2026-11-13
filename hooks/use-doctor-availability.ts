@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   availabilityService,
   type BlockedDate,
+  type ConsultationMode,
   type DoctorAppointmentView,
   type WeeklyAvailabilityInput,
   type WeeklyAvailabilityOutput,
@@ -13,6 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 export function useDoctorAvailability() {
   const { toast } = useToast();
   const [weekly, setWeekly] = useState<WeeklyAvailabilityOutput[]>([]);
+  const [modes, setModes] = useState<ConsultationMode[]>([]);
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [appointments, setAppointments] = useState<DoctorAppointmentView[]>([]);
@@ -23,13 +25,15 @@ export function useDoctorAvailability() {
     let active = true;
     Promise.all([
       availabilityService.getWeekly(),
+      availabilityService.getModes(),
       availabilityService.getBlocked(),
       availabilityService.getDoctorAppointments(),
       availabilityService.getDuration(),
     ])
-      .then(([weeklyResult, blockedResult, appointmentsResult, durationResult]) => {
+      .then(([weeklyResult, modesResult, blockedResult, appointmentsResult, durationResult]) => {
         if (active) {
           setWeekly(weeklyResult);
+          setModes(modesResult);
           setDurationMinutes(durationResult.durationMinutes);
           setBlockedDates(blockedResult);
           setAppointments(appointmentsResult);
@@ -53,7 +57,12 @@ export function useDoctorAvailability() {
 
   return {
     weekly,
+    modes,
     durationMinutes,
+    saveModes: async (values: ConsultationMode[]) => {
+      const result = await availabilityService.setModes(values);
+      setModes(result);
+    },
     blockedDates,
     appointments,
     loading,

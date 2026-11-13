@@ -1,10 +1,10 @@
 "use client";
 
 import { doctorCard, DoctorPageHeading, SectionTitle } from "../../components/doctor-ui";
-import { CalendarDays, Check, Clock3, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Check, Clock3, House, Plus, Trash2, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDoctorAvailability } from "@/hooks/use-doctor-availability";
-import type { Weekday } from "@/services/availability-service";
+import type { ConsultationMode, Weekday } from "@/services/availability-service";
 
 type ScheduleDay = { id: string; day: string; enabled: boolean; start: string; end: string };
 
@@ -21,6 +21,7 @@ const DAYS: { id: string; day: string; weekday: Weekday }[] = [
 export default function DoctorAvailabilityPage() {
   const {
     weekly,
+    modes,
     durationMinutes,
     blockedDates,
     appointments,
@@ -28,11 +29,13 @@ export default function DoctorAvailabilityPage() {
     error,
     saveWeekly,
     saveDuration,
+    saveModes,
     addBlockedDate,
     removeBlockedDate,
   } = useDoctorAvailability();
 
   const [duration, setDuration] = useState(30);
+  const [selectedModes, setSelectedModes] = useState<ConsultationMode[]>([]);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [blockDate, setBlockDate] = useState("");
@@ -47,7 +50,8 @@ export default function DoctorAvailabilityPage() {
         start: found?.startTime ?? "09:00", end: found?.endTime ?? "17:00" };
     })));
     void Promise.resolve().then(() => setDuration(durationMinutes));
-  }, [loading, error, weekly, durationMinutes]);
+    void Promise.resolve().then(() => setSelectedModes(modes));
+  }, [loading, error, weekly, durationMinutes, modes]);
 
   if (loading) {
     return (
@@ -115,6 +119,10 @@ export default function DoctorAvailabilityPage() {
     try {
       await saveWeekly(payload);
       await saveDuration(duration);
+      if (selectedModes.length === 0) {
+        throw new Error("Sélectionnez au moins un mode de consultation.");
+      }
+      await saveModes(selectedModes);
       setSaved(true);
     } catch (cause) {
       setSaved(false);
@@ -128,7 +136,7 @@ export default function DoctorAvailabilityPage() {
     <div className="space-y-5">
       <DoctorPageHeading
         title="Mes disponibilités"
-        description="Configurez vos horaires, la durée de vos consultations et vos indisponibilités."
+        description="Configurez vos modes de consultation, vos horaires et vos indisponibilités."
       />
       {saved && (
         <p role="status" className="flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">
@@ -142,6 +150,37 @@ export default function DoctorAvailabilityPage() {
           Impossible d&apos;enregistrer les disponibilités. Veuillez réessayer.
         </p>
       )}
+      <section className={`${doctorCard} p-4 sm:p-5`}>
+        <SectionTitle>Modes de consultation</SectionTitle>
+        <p className="mt-1 text-sm text-muted">Choisissez un mode ou les deux. Le choix détermine les types de rendez-vous acceptés.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3" role="group" aria-label="Modes de consultation acceptés">
+          {([
+            { value: "home", label: "À domicile", Icon: House, modes: ["home"] },
+            { value: "teleconsultation", label: "Téléconsultation", Icon: Video, modes: ["teleconsultation"] },
+            { value: "both", label: "Les deux", Icon: Check, modes: ["home", "teleconsultation"] },
+          ] as const).map(({ value, label, Icon, modes: values }) => {
+            const active = value === "both"
+              ? selectedModes.length === 2
+              : selectedModes.length === 1 && selectedModes[0] === value;
+            return <button
+              key={value}
+              type="button"
+              aria-pressed={active}
+              onClick={() => { setSelectedModes([...values] as ConsultationMode[]); setSaved(false); }}
+              className={`flex min-h-16 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold transition ${active
+                ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/15"
+                : "border-slate-200 bg-white text-ink hover:border-primary/40 hover:bg-slate-50"}`}
+            ><Icon className="size-5" aria-hidden />{label}</button>;
+          })}
+        </div>
+        <p className="mt-3 text-xs text-muted" aria-live="polite">
+          {selectedModes.length === 2 ? "Consultations à domicile et téléconsultations acceptées."
+            : selectedModes[0] === "home" ? "Consultations à domicile acceptées."
+            : selectedModes[0] === "teleconsultation" ? "Téléconsultations acceptées."
+            : "Aucun mode configuré : choisissez une option avant d’enregistrer."}
+        </p>
+      </section>
+
       <section className={`${doctorCard} p-4 sm:p-5`}>
         <SectionTitle>
           <>
@@ -312,7 +351,7 @@ export default function DoctorAvailabilityPage() {
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving || schedule.length !== 7}
+          disabled={saving || schedule.length !== 7 || selectedModes.length === 0}
           className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-white hover:bg-blue-700 sm:w-auto"
         >
           <Check className="size-4" aria-hidden />

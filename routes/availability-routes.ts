@@ -1,6 +1,14 @@
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
 
 export const availabilityRoutes = {
+  Modes: {
+    url: `${API_URL}/availabilities/me/modes`,
+    method: "GET",
+  },
+  SetModes: {
+    url: `${API_URL}/availabilities/me/modes`,
+    method: "PUT",
+  },
   Weekly: {
     url: `${API_URL}/availabilities/me/weekly`,
     method: "GET",
