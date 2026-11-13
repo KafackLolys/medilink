@@ -1,5 +1,6 @@
 "use client";
 
+import { ProposalsPanel } from "./proposals-panel";
 import { StatusBadge, type Status } from "@/components/custum/status-badge";
 import { usePatientNeed } from "@/hooks/use-patient-need";
 import type { NeedStatus } from "@/services/need-service";
@@ -37,7 +38,7 @@ function formatDate(date: string): string {
 }
 
 export default function PatientRequestDetail({ id }: { id: string }) {
-  const { need, loading, error } = usePatientNeed(id);
+  const { need, loading, error, reload } = usePatientNeed(id);
 
   if (loading) {
     return <p role="status" className="rounded-3xl bg-white p-8 text-center text-muted">Chargement de la demande…</p>;
@@ -58,7 +59,7 @@ export default function PatientRequestDetail({ id }: { id: string }) {
   const editable = EDITABLE_STATUSES.includes(need.status);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="relative left-1/2 w-[calc(100vw-2.5rem)] max-w-[1320px] -translate-x-1/2 space-y-6 sm:w-[calc(100vw-4rem)]">
       <Link href="/patient/demandes" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
         <ArrowLeft className="size-4" aria-hidden />Mes demandes
       </Link>
@@ -67,6 +68,8 @@ export default function PatientRequestDetail({ id }: { id: string }) {
         <p className="mt-2 text-lg text-muted">Suivez son statut et les médecins intéressés.</p>
       </header>
 
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(360px,1fr)]">
+      <div className="min-w-0 space-y-6">
       <article className="space-y-6 rounded-3xl bg-white p-6 shadow-[0_8px_30px_-16px_rgba(30,41,59,.16)] sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -148,6 +151,9 @@ export default function PatientRequestDetail({ id }: { id: string }) {
         <Link href="/patient/medecins" className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 font-semibold text-white">Trouver un médecin</Link>
         {editable && <Link href={`/patient/demandes/${need.id}/modifier`} className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 font-semibold text-ink shadow-sm">Modifier la demande</Link>}
         <Link href="/patient/demandes" className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 font-semibold text-ink shadow-sm">Retour à mes demandes</Link>
+      </div>
+      </div>
+      <ProposalsPanel needId={need.id} status={need.status} onAccepted={reload} />
       </div>
     </div>
   );

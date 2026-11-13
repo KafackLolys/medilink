@@ -90,6 +90,19 @@ export interface DoctorProposalRequest {
   details?: string;
 }
 
+export interface PatientProposal {
+  id: string;
+  status: ProposalStatus;
+  doctor: { id: string; name: string; specialty: string };
+  conversationId: string;
+  message: string;
+  proposedAt: string;
+  proposedAppointmentAt: string | null;
+  consultationMode: "home" | "teleconsultation";
+  fee: number;
+  currency: string;
+}
+
 export type ProposalStatus =
   | "sent"
   | "pending"
@@ -140,6 +153,14 @@ export interface CreateNeedRequest {
 }
 
 export const needService = {
+  patientProposals(needId: string): Promise<{ items: PatientProposal[] }> {
+    const route = needRoutes.PatientProposals(needId);
+    return apiRequest(route.url, { method: route.method });
+  },
+  acceptPatientProposal(needId: string, proposalId: string): Promise<{ proposalId: string; appointmentId: string }> {
+    const route = needRoutes.AcceptPatientProposal(needId, proposalId);
+    return apiRequest(route.url, { method: route.method });
+  },
   list(): Promise<PatientNeed[]> {
     return apiRequest<PatientNeed[]>(needRoutes.List.url, {
       method: needRoutes.List.method,

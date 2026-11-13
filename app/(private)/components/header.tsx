@@ -107,19 +107,21 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-1.5">
-          <ActivityPopover
-            trigger={
-              <button type="button" aria-label="Ouvrir les notifications et messages" className="relative grid size-11 place-items-center rounded-full text-ink transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25">
-                <Bell className="size-5" aria-hidden />
-                {notificationFeed.unreadCount > 0 && <span className="absolute right-2 top-1 grid min-w-5 place-items-center rounded-full border-2 border-white bg-danger px-1 text-[10px] font-bold leading-4 text-white">{notificationFeed.unreadCount > 99 ? "99+" : notificationFeed.unreadCount}</span>}
-              </button>
-            }
-            notifications={admin ? [] : activities}
-            messages={admin ? [] : messageActivities}
-            allNotificationsHref={doctor ? "/medecin/messages?tab=notifications" : "/patient/profil?activeContent=messages&tab=notifications"}
-            allMessagesHref={doctor ? "/medecin/messages" : "/patient/profil?activeContent=messages&tab=messages"}
-            onNotificationOpen={(id) => void notificationFeed.markRead(id)}
-          />
+          {!admin && (
+            <ActivityPopover
+              trigger={
+                <button type="button" aria-label="Ouvrir les notifications et messages" className="relative grid size-11 place-items-center rounded-full text-ink transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25">
+                  <Bell className="size-5" aria-hidden />
+                  {notificationFeed.unreadCount > 0 && <span className="absolute right-2 top-1 grid min-w-5 place-items-center rounded-full border-2 border-white bg-danger px-1 text-[10px] font-bold leading-4 text-white">{notificationFeed.unreadCount > 99 ? "99+" : notificationFeed.unreadCount}</span>}
+                </button>
+              }
+              notifications={admin ? [] : activities}
+              messages={admin ? [] : messageActivities}
+              allNotificationsHref={doctor ? "/medecin/messages?tab=notifications" : "/patient/profil?activeContent=messages&tab=notifications"}
+              allMessagesHref={doctor ? "/medecin/messages" : "/patient/profil?activeContent=messages&tab=messages"}
+              onNotificationOpen={(id) => void notificationFeed.markRead(id)}
+            />
+          )}
 
           <Popover>
             <PopoverTrigger
@@ -140,7 +142,7 @@ export function Header() {
                 </div>
                 {doctor && <CheckCircle2 className="size-5 shrink-0 text-emerald-600" aria-label="Compte médecin vérifié" />}
               </div>
-              <Link href={admin ? "/admin" : doctor ? "/medecin/profil" : "/patient/profil"} className="flex h-11 items-center gap-3 rounded-xl px-3 font-semibold text-ink transition hover:bg-slate-50 hover:text-primary">
+              <Link href={admin ? "/admin/profil" : doctor ? "/medecin/profil" : "/patient/profil"} className="flex h-11 items-center gap-3 rounded-xl px-3 font-semibold text-ink transition hover:bg-slate-50 hover:text-primary">
                 <User className="size-4 text-muted" aria-hidden />
                 {admin ? "Gérer les comptes" : "Gérer mon profil"}
               </Link>

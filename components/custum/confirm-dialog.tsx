@@ -55,7 +55,7 @@ export function ConfirmDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
-        <DialogFooter>
+        <DialogFooter className="bg-gray-100">
           <DialogClose render={<Button variant="outline" disabled={pending} />}>Annuler</DialogClose>
           <Button variant="destructive" onClick={confirm} disabled={pending}>
             {pending ? "Veuillez patienter…" : confirmLabel}

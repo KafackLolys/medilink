@@ -1,6 +1,12 @@
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
 
 export const needRoutes = {
+  PatientProposals: (id: string) => ({
+    url: `${API_URL}/needs/${encodeURIComponent(id)}/proposals`, method: "GET",
+  }),
+  AcceptPatientProposal: (id: string, proposalId: string) => ({
+    url: `${API_URL}/needs/${encodeURIComponent(id)}/proposals/${encodeURIComponent(proposalId)}/accept`, method: "PATCH",
+  }),
   List: {
     url: `${API_URL}/needs`,
     method: "GET",

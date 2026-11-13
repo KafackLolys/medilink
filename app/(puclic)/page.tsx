@@ -2,9 +2,14 @@ import RecommendedDoctors from "./recommended-doctors";
 import { Activity, Baby, BadgeCheck, Brain, CalendarCheck, FileText, Flower2, HeartPulse, LayoutGrid, MapPin, MessageCircle, Plus, Search, ShieldCheck, Sparkles, Stethoscope } from "lucide-react";
 
 const SPECIALTIES = [
-  { n: "Médecine générale", I: Stethoscope }, { n: "Pédiatrie", I: Baby }, { n: "Cardiologie", I: HeartPulse },
-  { n: "Dermatologie", I: Sparkles }, { n: "Gynécologie", I: Flower2 }, { n: "Neurologie", I: Brain },
-  { n: "Kinésithérapie", I: Activity }, { n: "Autres", I: LayoutGrid },
+  { n: "Médecine générale", I: Stethoscope },
+  { n: "Pédiatrie", I: Baby },
+  { n: "Cardiologie", I: HeartPulse },
+  { n: "Dermatologie", I: Sparkles },
+  { n: "Gynécologie", I: Flower2 },
+  { n: "Neurologie", I: Brain },
+  { n: "Kinésithérapie", I: Activity },
+  { n: "Autres", I: LayoutGrid },
 ];
 const STEPS = [
   { t: "Décrivez votre besoin", d: "Expliquez simplement votre situation, à votre rythme.", I: FileText },
@@ -26,7 +31,10 @@ export default function Home() {
               <span className="text-xl font-extrabold tracking-tight text-night">MedLink</span>
             </div>
             <nav className="hidden gap-7 text-[15px] font-medium text-muted md:flex">
-              <a className="font-bold text-ink" href="#">Accueil</a><a href="#">Trouver un médecin</a><a href="#">Besoins médicaux</a><a href="#">Comment ça marche</a>
+              <a className="font-bold text-ink" href="/">Accueil</a>
+              <a href="/login">Trouver un médecin</a>
+              <a href="/login">Besoins médicaux</a>
+              <a href="/comment-ça-marche">Comment ça marche</a>
             </nav>
           </div>
           <div className="flex items-center gap-2">
@@ -102,7 +110,7 @@ export default function Home() {
           <h2 className="text-2xl font-extrabold tracking-tight text-night">Quelle spécialité recherchez-vous ?</h2>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
             {SPECIALTIES.map(({ n, I }) => (
-              <a key={n} href="#" className="flex flex-col items-center gap-3 rounded-3xl bg-white p-4 text-center shadow-[0_8px_30px_-16px_rgba(30,41,59,.15)] transition hover:-translate-y-0.5">
+              <a key={n} href="/login" className="flex flex-col items-center gap-3 rounded-3xl bg-white p-4 text-center shadow-[0_8px_30px_-16px_rgba(30,41,59,.15)] transition hover:-translate-y-0.5">
                 <span className="grid size-12 place-items-center rounded-2xl bg-primary/[.08] text-primary"><I className="size-6" /></span>
                 <span className="text-sm font-semibold leading-tight">{n}</span>
               </a>
