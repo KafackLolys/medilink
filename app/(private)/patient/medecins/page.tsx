@@ -1,9 +1,10 @@
 "use client";
 
 import { DoctorCard } from "../../components/doctor-card";
+import { DoctorsMap } from "../../components/doctors-map";
 import { TextField } from "@/components/custum/field";
 import { useDoctors } from "@/hooks/use-doctors";
-import { Search } from "lucide-react";
+import { List, Map as MapIcon, Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -14,6 +15,8 @@ export default function FindDoctorPage() {
   const [city, setCity] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [filters, setFilters] = useState({ q: "", city: "", specialty: "" });
+  const [view, setView] = useState<"list" | "map">("list");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const { doctors, specialties, loading, error, retry } = useDoctors(filters);
 
   function resetFilters() {
@@ -79,6 +82,13 @@ export default function FindDoctorPage() {
         {doctors.length === 1 ? "médecin trouvé" : "médecins trouvés"}
       </p>
 
+      {!loading && !error && doctors.length > 0 && (
+        <div className="flex items-center gap-2" role="group" aria-label="Affichage des médecins">
+          <button type="button" aria-pressed={view === "list"} onClick={() => setView("list")} className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold ${view === "list" ? "bg-primary text-white" : "bg-white text-ink"}`}><List className="size-4" /> Liste</button>
+          <button type="button" aria-pressed={view === "map"} onClick={() => setView("map")} className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold ${view === "map" ? "bg-primary text-white" : "bg-white text-ink"}`}><MapIcon className="size-4" /> Carte</button>
+        </div>
+      )}
+
       {loading ? (
         <div role="status" className={`${card} p-12 text-center text-muted`}>Chargement des profils vérifiés…</div>
       ) : doctors.length === 0 ? (
@@ -88,6 +98,8 @@ export default function FindDoctorPage() {
           </p>
           {!error && <button onClick={resetFilters} className="h-11 rounded-full bg-surface px-6 font-semibold text-ink">Effacer les filtres</button>}
         </div>
+      ) : view === "map" ? (
+        <DoctorsMap doctors={doctors} selectedId={selectedId} onSelect={setSelectedId} />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2">
           {doctors.map((doctor) => <li key={doctor.id}><DoctorCard doctor={doctor} /></li>)}

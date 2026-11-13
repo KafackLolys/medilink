@@ -85,9 +85,22 @@ export function useNotifications(pageSize = 20, poll = false) {
   useEffect(() => {
     let active = true;
     let stopListening: (() => void) | null = null;
+
+    const isAdmin = () => {
+      const session = authStore.getState().session;
+      return Boolean(session?.user.role === "admin");
+    };
+
     const load = () => {
       const session = authStore.getState().session;
       if (!session) {
+        setResult(EMPTY_PAGE);
+        useNotificationStore.getState().updateCountsFromNotifications([], 0);
+        setLoading(false);
+        return;
+      }
+      // Les administrateurs ne voient pas de notifications.
+      if (session.user.role === "admin") {
         setResult(EMPTY_PAGE);
         useNotificationStore.getState().updateCountsFromNotifications([], 0);
         setLoading(false);
@@ -121,42 +134,56 @@ export function useNotifications(pageSize = 20, poll = false) {
     };
 
     load();
-    const interval = poll
-      ? window.setInterval(() => {
-          if (!document.hidden) load();
-        }, 30_000)
-      : null;
-    const onVisibilityChange = () => {
-      if (!document.hidden) load();
-    };
-    if (poll) document.addEventListener("visibilitychange", onVisibilityChange);
-    const onPush = () => load();
-    window.addEventListener("medilink:notification", onPush);
-    if (poll && isWebPushConfigured()) {
-      void listenForWebPush(() => undefined)
-        .then((unsubscribe) => {
-          if (active) stopListening = unsubscribe;
-          else unsubscribe();
-        })
-        .catch((cause: unknown) => {
-          if (active) {
-            setError(
-              cause instanceof Error
-                ? cause.message
-                : "Impossible d’activer la réception des notifications push.",
-            );
-          }
-        });
+
+    let interval: number | null = null;
+    let onVisibilityChange: (() => void) | null = null;
+    let onPush: (() => void) | null = null;
+
+    // Aucun polling ni écouteur push pour les administrateurs.
+    if (!isAdmin()) {
+      interval = poll
+        ? window.setInterval(() => {
+            if (!document.hidden) load();
+          }, 30_000)
+        : null;
+      onVisibilityChange = () => {
+        if (!document.hidden) load();
+      };
+      if (poll && onVisibilityChange) {
+        document.addEventListener("visibilitychange", onVisibilityChange);
+      }
+      onPush = () => load();
+      window.addEventListener("medilink:notification", onPush);
+      if (poll && isWebPushConfigured()) {
+        void listenForWebPush(() => undefined)
+          .then((unsubscribe) => {
+            if (active) stopListening = unsubscribe;
+            else unsubscribe();
+          })
+          .catch((cause: unknown) => {
+            if (active) {
+              setError(
+                cause instanceof Error
+                  ? cause.message
+                  : "Impossible d’activer la réception des notifications push.",
+              );
+            }
+          });
+      }
     }
 
     return () => {
       active = false;
       stopListening?.();
-      if (interval !== null) window.clearInterval(interval);
-      if (poll) document.removeEventListener("visibilitychange", onVisibilityChange);
-      window.removeEventListener("medilink:notification", onPush);
+      if (interval) window.clearInterval(interval);
+      if (onVisibilityChange) {
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      }
+      if (onPush) {
+        window.removeEventListener("medilink:notification", onPush);
+      }
     };
-  }, [page, pageSize, poll, reloadKey, enabled]);
+  }, [page, pageSize, poll, reloadKey]);
 
   const unreadMessagesCount = useNotificationStore(
     (state) => state.unreadMessagesCount,

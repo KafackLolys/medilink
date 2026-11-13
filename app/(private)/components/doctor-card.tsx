@@ -1,6 +1,7 @@
 import { BadgeCheck, CalendarDays, MapPin, Star } from "lucide-react";
 import Link from "next/link";
 import type { DoctorDirectoryItem } from "@/services/doctor-service";
+import { nextBookableWindow } from "@/lib/doctor-bookability";
 
 const modeLabels = {
   home: "À domicile",
@@ -21,16 +22,7 @@ export function DoctorCard({ doctor }: { doctor: DoctorDirectoryItem }) {
     .map((part) => part[0] ?? "")
     .join("")
     .toUpperCase();
-  const nextSlot = doctor.availability[0];
-  const slotDays: Record<string, string> = {
-    monday: "Lun.",
-    tuesday: "Mar.",
-    wednesday: "Mer.",
-    thursday: "Jeu.",
-    friday: "Ven.",
-    saturday: "Sam.",
-    sunday: "Dim.",
-  };
+  const nextSlot = nextBookableWindow(doctor);
 
   return (
     <article className="rounded-3xl bg-white p-5 shadow-[0_8px_30px_-16px_rgba(30,41,59,.16)]">
@@ -61,10 +53,10 @@ export function DoctorCard({ doctor }: { doctor: DoctorDirectoryItem }) {
         {nextSlot ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
             <CalendarDays className="size-3.5" aria-hidden />
-            {slotDays[nextSlot.weekday] ?? nextSlot.weekday} · {nextSlot.startTime}–{nextSlot.endTime}
+            {nextSlot.label} · {nextSlot.startTime}–{nextSlot.endTime}
           </span>
         ) : (
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-muted">Disponibilités non renseignées</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-muted">Aucun créneau proposé dans les 30 prochains jours</span>
         )}
         {doctor.modes.map((mode) => (
           <span key={mode} className="rounded-full bg-surface px-3 py-1 text-xs font-semibold text-muted">
@@ -76,9 +68,15 @@ export function DoctorCard({ doctor }: { doctor: DoctorDirectoryItem }) {
         <Link href={`/patient/medecins/${doctor.id}`} className="inline-flex h-11 items-center justify-center rounded-full bg-surface px-3 text-[15px] font-semibold text-ink hover:bg-slate-100">
           Voir le profil
         </Link>
-        <Link href={`/patient/medecins/${doctor.id}/rendez-vous`} className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-3 text-[15px] font-semibold text-white">
-          Prendre rendez-vous
-        </Link>
+        {nextSlot ? (
+          <Link href={`/patient/medecins/${doctor.id}/rendez-vous`} className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-3 text-[15px] font-semibold text-white">
+            Prendre rendez-vous
+          </Link>
+        ) : (
+          <Link href={`/patient/medecins/${doctor.id}`} className="inline-flex h-11 items-center justify-center rounded-full bg-slate-100 px-3 text-[15px] font-semibold text-ink">
+            Consulter le profil
+          </Link>
+        )}
       </div>
     </article>
   );

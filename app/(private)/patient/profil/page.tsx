@@ -4,8 +4,6 @@ import { integrationService } from "@/services/integration-service";
 import { LiveMedicalSections } from "./components/live-medical-sections";
 
 import {
-  PATIENT_PROFILE,
-  PATIENT_PROFILE_MESSAGES,
   PATIENT_PROFILE_NAV,
 } from "@/lib/patient-profile-data";
 import {
@@ -47,7 +45,6 @@ const card =
 type EditableProfileField =
   | "name"
   | "phone"
-  | "email"
   | "location"
   | "bloodType";
 type ProfileView = {
@@ -104,8 +101,8 @@ function toProfileView(data: PatientProfileResponse): ProfileView {
   };
 
   return {
-    name: patient.fullName,
-    initials: patient.fullName
+    name: patient.fullName?.trim() || [user.firstName, user.lastName].filter(Boolean).join(" ") || "Patient",
+    initials: (patient.fullName?.trim() || [user.firstName, user.lastName].filter(Boolean).join(" ") || "Patient")
       .split(/\s+/)
       .map((part) => part[0])
       .join("")
@@ -117,8 +114,8 @@ function toProfileView(data: PatientProfileResponse): ProfileView {
     location: patient.address
       ? `${patient.address.city}, ${patient.address.district}`
       : "Localisation non renseignée",
-    phone: user.phone,
-    email: user.email,
+    phone: user.phone ?? "",
+    email: user.email ?? "",
     verified: patient.verified,
   };
 }
@@ -184,10 +181,6 @@ function ProfileSidebar({
                         {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
                       </span>
                     ) : null
-                  ) : "badge" in item && (item as { badge?: number | string }).badge ? (
-                    <span className="grid size-5 place-items-center rounded-full bg-danger text-xs font-bold text-white">
-                      {String((item as { badge?: number | string }).badge)}
-                    </span>
                   ) : null}
                 </button>
               </li>
@@ -225,10 +218,6 @@ export default function PatientProfilePage() {
   const [saved, setSaved] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
-  const baseProfile: ProfileView = apiProfile
-    ? toProfileView(apiProfile)
-    : PATIENT_PROFILE;
-  const profile = editedProfile ?? baseProfile;
 
   const [activeContent, setActiveContent] = useState<
     "profil" | "messages" | "documents"
@@ -242,8 +231,9 @@ export default function PatientProfilePage() {
   }, []);
 
   function updateProfile(key: EditableProfileField, value: string) {
+    if (!apiProfile) return;
     setEditedProfile((current) => ({
-      ...(current ?? baseProfile),
+      ...(current ?? toProfileView(apiProfile)),
       [key]: value,
     }));
     setSaved(false);
@@ -251,16 +241,19 @@ export default function PatientProfilePage() {
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!apiProfile) return;
+    const profile = editedProfile ?? toProfileView(apiProfile);
     setProfileSaveError(null);
     setSavingProfile(true);
     try {
       const bloodType = ({"A+":"a_positive", "A-":"a_negative", "B+":"b_positive", "B-":"b_negative", "AB+":"ab_positive", "AB-":"ab_negative", "O+":"o_positive", "O-":"o_negative", "Inconnu":"unknown"} as Record<string,string>)[profile.bloodType];
-      const pieces = profile.location.split(",");
+      const pieces = (profile.location === "Localisation non renseignée" ? "" : profile.location).split(",");
       await integrationService.savePatientProfile({
         name:profile.name, phone:profile.phone, bloodType: bloodType ?? "unknown",
         city:pieces[0]?.trim() ?? "", district:pieces.slice(1).join(",").trim(),
       });
       setEditing(false);
+      setEditedProfile(null);
       setSaved(true);
       reload();
     } catch (cause) {
@@ -271,25 +264,19 @@ export default function PatientProfilePage() {
     }
   }
 
+  if (loading && !apiProfile) {
+    return <div role="status" className={`${card} mx-auto max-w-xl p-6 text-center text-muted`}>Chargement de votre profil…</div>;
+  }
   if (error || !apiProfile) {
     return (
       <section className={`${card} mx-auto max-w-xl p-6 text-center`}>
-        <h1 className="text-xl font-extrabold text-night">
-          Profil indisponible
-        </h1>
-        <p role="alert" className="mt-2 text-sm text-muted">
-          {error ?? "Aucune information de profil n’a été retournée."}
-        </p>
-        <button
-          type="button"
-          onClick={reload}
-          className="mt-4 h-10 rounded-xl bg-primary px-4 text-sm font-bold text-white"
-        >
-          Réessayer
-        </button>
+        <h1 className="text-xl font-extrabold text-night">Profil indisponible</h1>
+        <p role="alert" className="mt-2 text-sm text-muted">{error ?? "Aucune information de profil n’a été retournée."}</p>
+        <button type="button" onClick={reload} className="mt-4 h-10 rounded-xl bg-primary px-4 text-sm font-bold text-white">Réessayer</button>
       </section>
     );
   }
+  const profile = editedProfile ?? toProfileView(apiProfile);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[205px_minmax(0,1fr)] lg:gap-6">
@@ -402,17 +389,13 @@ export default function PatientProfilePage() {
                     type="email"
                     value={profile.email}
                     disabled
-                    onChange={(event) =>
-                      updateProfile("email", event.target.value)
-                    }
                     className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 px-3 font-normal outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
                   />
                 </label>
                 <label className="text-sm font-semibold text-ink">
                   Ville et quartier
                   <input
-                    required
-                    value={profile.location}
+                    value={profile.location === "Localisation non renseignée" ? "" : profile.location}
                     onChange={(event) =>
                       updateProfile("location", event.target.value)
                     }
