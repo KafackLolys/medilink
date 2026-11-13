@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { authStore } from "./store/auth-store";
 
 /**
  * Rôles autorisés par préfixe de route.
@@ -52,6 +53,7 @@ export function middleware(request: NextRequest) {
 
   // Si l'utilisateur n'a pas de rôle (non connecté) et tente d'accéder à une route privée
   if (isPrivateRoute && !role) {
+    authStore.getState().clearSession();
     return NextResponse.redirect(new URL(LOGIN_PATH, request.url));
   }
 

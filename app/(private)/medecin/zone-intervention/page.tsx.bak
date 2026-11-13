@@ -1,70 +1,37 @@
 "use client";
 
-import { doctorCard, DoctorPageHeading } from "../../components/doctor-ui";
-import { DOCTOR_ZONES } from "@/lib/doctor-portal-data";
-import { ArrowLeft, Check, MapPin, Minus, Plus, Radius } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { MapPin, Plus, Trash2 } from "lucide-react";
+import { integrationService, type DoctorZoneSettings } from "@/services/integration-service";
 
-export default function DoctorServiceAreaPage() {
-  const [city, setCity] = useState<string>(DOCTOR_ZONES.city);
-  const [districts, setDistricts] = useState<string[]>([...DOCTOR_ZONES.districts]);
-  const [radius, setRadius] = useState<number>(DOCTOR_ZONES.radiusKm);
-  const [maxDistance, setMaxDistance] = useState<number>(DOCTOR_ZONES.maxDistanceKm);
-  const [newDistrict, setNewDistrict] = useState("");
-  const [saved, setSaved] = useState(false);
-
-  function addDistrict() {
-    const name = newDistrict.trim();
-    if (name && !districts.some((district) => district.toLowerCase() === name.toLowerCase())) {
-      setDistricts((current) => [...current, name]);
-      setNewDistrict("");
-      setSaved(false);
-    }
+const empty: DoctorZoneSettings = {city:"",districts:[],radiusKm:10,maxDistanceKm:25};
+const card = "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm";
+export default function DoctorZonePage() {
+  const [zone,setZone]=useState<DoctorZoneSettings>(empty);
+  const [district,setDistrict]=useState("");
+  const [loading,setLoading]=useState(true);
+  const [saving,setSaving]=useState(false);
+  const [error,setError]=useState<string|null>(null);
+  const [success,setSuccess]=useState(false);
+  const [refresh,setRefresh]=useState(0);
+  useEffect(()=>{
+    let live=true;setLoading(true);setError(null);
+    integrationService.getDoctorZone().then(v=>{if(live)setZone(v)}).catch(e=>{if(live)setError(e instanceof Error?e.message:"Impossible de charger les zones.")}).finally(()=>{if(live)setLoading(false)});
+    return ()=>{live=false};
+  },[refresh]);
+  function addDistrict(){const value=district.trim();if(!value || zone.districts.some(d=>d.toLowerCase()===value.toLowerCase()))return;setZone(z=>({...z,districts:[...z.districts,value]}));setDistrict("");setSuccess(false)}
+  async function submit(event:FormEvent){event.preventDefault();setSaving(true);setSuccess(false);setError(null);
+    try{const updated=await integrationService.saveDoctorZone(zone);setZone(updated);setSuccess(true)}
+    catch(e){setError(e instanceof Error?e.message:"Impossible d'enregistrer la zone.")}finally{setSaving(false)}
   }
-
-  return (
-    <div className="mx-auto max-w-5xl space-y-5">
-      <Link href="/medecin/profil" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"><ArrowLeft className="size-4" aria-hidden />Retour au profil</Link>
-      <DoctorPageHeading title="Zone d’intervention" description="Choisissez les localités où vous acceptez de consulter vos patients." />
-      {saved && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">Votre zone d’intervention a été enregistrée.</p>}
-      <div className="grid gap-4 lg:grid-cols-5">
-        <section className={`${doctorCard} space-y-5 p-4 sm:p-5 lg:col-span-2`}>
-          <label className="block text-sm font-semibold text-ink">Ville principale
-            <input value={city} onChange={(event) => { setCity(event.target.value); setSaved(false); }} className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 px-3 outline-none focus:border-primary" />
-          </label>
-          <div>
-            <h2 className="text-sm font-bold text-ink">Quartiers couverts</h2>
-            <ul className="mt-2 flex flex-wrap gap-2">
-              {districts.map((district) => <li key={district} className="inline-flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-3 pr-1 text-xs font-semibold text-primary">{district}<button type="button" aria-label={`Supprimer ${district}`} onClick={() => { setDistricts((items) => items.filter((item) => item !== district)); setSaved(false); }} className="grid size-6 place-items-center rounded-full bg-red-100 hover:bg-red-300"><Minus className="size-3" aria-hidden /></button></li>)}
-            </ul>
-            <div className="mt-3 flex gap-2">
-              <input value={newDistrict} onChange={(event) => setNewDistrict(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addDistrict(); } }} placeholder="Ajouter un quartier" className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-primary" />
-              <button type="button" onClick={addDistrict} aria-label="Ajouter le quartier" className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-white"><Plus className="size-4" aria-hidden /></button>
-            </div>
-          </div>
-          <label className="block text-sm font-semibold text-ink">Rayon d’intervention : {radius} km
-            <input type="range" min="1" max="30" value={radius} onChange={(event) => { setRadius(Number(event.target.value)); setSaved(false); }} className="mt-2 w-full accent-primary" />
-          </label>
-          <label className="block text-sm font-semibold text-ink">Distance maximale acceptée
-            <select value={maxDistance} onChange={(event) => { setMaxDistance(Number(event.target.value)); setSaved(false); }} className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-white px-3">
-              {[5, 10, 15, 20, 30].map((distance) => <option key={distance} value={distance}>{distance} km</option>)}
-            </select>
-          </label>
-          <button type="button" onClick={() => setSaved(true)} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-white hover:bg-blue-700"><Check className="size-4" aria-hidden />Enregistrer la zone</button>
-        </section>
-        <section className={`${doctorCard} relative min-h-80 overflow-hidden bg-gradient-to-br from-emerald-50 via-sky-50 to-blue-100 lg:col-span-3`} aria-label={`Carte de ${city} et des zones couvertes`}>
-          <div className="absolute inset-0 opacity-50" style={{ backgroundImage: "linear-gradient(35deg, transparent 48%, #94a3b8 49%, #94a3b8 50%, transparent 51%), linear-gradient(125deg, transparent 48%, #94a3b8 49%, #94a3b8 50%, transparent 51%)", backgroundSize: "62px 54px" }} />
-          <div className="absolute left-1/2 top-1/2 grid aspect-square w-[62%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-dashed border-emerald-500/60 bg-emerald-400/10">
-            <div className="grid size-12 place-items-center rounded-full bg-primary text-white shadow-lg"><MapPin className="size-6" aria-hidden /></div>
-          </div>
-          <div className="absolute left-3 top-3 rounded-xl bg-white/90 px-3 py-2 text-sm font-bold text-night shadow-sm"><Radius className="mr-1 inline size-4 text-primary" aria-hidden />{city} · rayon {radius} km</div>
-          <ul className="absolute inset-x-3 bottom-3 flex flex-wrap gap-1.5">
-            {districts.map((district) => <li key={district} className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink">{district}</li>)}
-          </ul>
-        </section>
-      </div>
-      <p className="text-xs leading-5 text-muted">La carte est une représentation indicative. Les patients voient uniquement une zone approximative, jamais votre adresse personnelle.</p>
-    </div>
-  );
+  return <div className="space-y-5"><header><h1 className="flex items-center gap-2 text-3xl font-extrabold text-night"><MapPin className="size-7 text-primary"/> Zone d’intervention</h1><p className="mt-2 text-muted">Définissez les zones dans lesquelles vous intervenez. Les modifications sont enregistrées sur le serveur.</p></header>
+    {error && <p role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error} <button type="button" className="font-bold underline" onClick={()=>setRefresh(v=>v+1)}>Réessayer</button></p>}
+    {loading ? <p role="status" className={card}>Chargement des zones…</p> : <form onSubmit={submit} className={`${card} space-y-5`}>
+      {success && <p role="status" className="rounded-lg bg-emerald-50 p-3 font-semibold text-emerald-700">Zone enregistrée sur le serveur.</p>}
+      <label className="block text-sm font-bold">Ville<input maxLength={100} required value={zone.city} onChange={e=>{setZone(z=>({...z,city:e.target.value}));setSuccess(false)}} placeholder="Ex. Yaoundé" className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3"/></label>
+      <section><h2 className="font-bold">Quartiers couverts</h2><div className="mt-2 flex gap-2"><input value={district} maxLength={100} onChange={e=>setDistrict(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();addDistrict()}}} placeholder="Ajouter un quartier" className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 px-3"/><button type="button" onClick={addDistrict} className="rounded-xl bg-blue-50 px-4 font-bold text-primary"><Plus className="size-5" aria-label="Ajouter"/></button></div><ul className="mt-3 flex flex-wrap gap-2">{zone.districts.map(d=><li key={d} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm">{d}<button type="button" aria-label={`Retirer ${d}`} onClick={()=>{setZone(z=>({...z,districts:z.districts.filter(x=>x!==d)}));setSuccess(false)}}><Trash2 className="size-4 text-rose-600"/></button></li>)}</ul></section>
+      <div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-bold">Rayon d’intervention (km)<input type="number" min={1} max={250} required value={zone.radiusKm} onChange={e=>{setZone(z=>({...z,radiusKm:Number(e.target.value)}));setSuccess(false)}} className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3"/></label><label className="text-sm font-bold">Distance maximale (km)<input type="number" min={1} max={500} required value={zone.maxDistanceKm} onChange={e=>{setZone(z=>({...z,maxDistanceKm:Number(e.target.value)}));setSuccess(false)}} className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3"/></label></div>
+      <button disabled={saving} type="submit" className="h-11 rounded-xl bg-primary px-6 font-bold text-white disabled:opacity-50">{saving?"Enregistrement…":"Enregistrer la zone"}</button>
+    </form>}
+  </div>;
 }

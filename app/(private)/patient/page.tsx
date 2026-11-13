@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { normalizePatientInternalHref } from "@/lib/message-navigation";
 import { ArrowRight, Bell, CalendarDays, FileText, Stethoscope } from "lucide-react";
 import { needService, type PatientNeed } from "@/services/need-service";
 import { appointmentService, type PatientAppointment } from "@/services/appointment-service";
@@ -62,7 +63,7 @@ export default function PatientDashboard() {
         <section><div className="flex items-center justify-between"><h2 className="text-xl font-extrabold">Demandes en cours</h2><Link href="/patient/demandes" className="text-sm font-bold text-primary">Tout voir</Link></div>
           <ul className="mt-3 space-y-2">{active.slice(0,4).map(n=><li key={n.id}><Link href={`/patient/demandes/${encodeURIComponent(n.id)}`} className={`${card} block`}><p className="font-bold">{n.title}</p><p className="mt-1 text-sm text-muted">{n.specialty} · {needStatus[n.status] ?? n.status}</p></Link></li>)}</ul>{active.length===0 && <p className={`${card} mt-3 text-muted`}>Aucune demande active.</p>}
         </section>
-        <section><h2 className="flex items-center gap-2 text-xl font-extrabold"><Bell className="size-5 text-primary"/> Notifications</h2><ul className="mt-3 space-y-2">{notifications.map(n=><li key={n.id}><Link href={n.targetUrl?.startsWith("/") ? n.targetUrl : "/patient"} className={`${card} block`}><p className="font-semibold">{n.title}</p><p className="text-sm text-muted">{n.body}</p><p className="mt-1 text-xs text-muted">{dateLabel(n.createdAt)}</p></Link></li>)}</ul>{notifications.length===0 && <p className={`${card} mt-3 text-muted`}>Aucune notification.</p>}</section>
+        <section><h2 className="flex items-center gap-2 text-xl font-extrabold"><Bell className="size-5 text-primary"/> Notifications</h2><ul className="mt-3 space-y-2">{notifications.map(n=><li key={n.id}><Link href={normalizePatientInternalHref(n.targetUrl)} className={`${card} block`}><p className="font-semibold">{n.title}</p><p className="text-sm text-muted">{n.body}</p><p className="mt-1 text-xs text-muted">{dateLabel(n.createdAt)}</p></Link></li>)}</ul>{notifications.length===0 && <p className={`${card} mt-3 text-muted`}>Aucune notification.</p>}</section>
       </div>
     </>}
   </div>;

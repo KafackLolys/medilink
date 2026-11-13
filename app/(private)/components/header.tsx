@@ -62,7 +62,7 @@ export function Header() {
     text: item.body,
     when: new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(item.createdAt)),
     unread: !item.readAt,
-    href: item.targetUrl ?? (doctor ? "/medecin/messages" : "/patient/profil?tab=messages"),
+    href: item.targetUrl ?? (doctor ? "/medecin/messages" : "/patient/profil?activeContent=messages&tab=messages"),
   }));
   const messageActivities: ActivityMessage[] = notificationFeed.items
     .filter((item) => item.type === "new_message")
@@ -72,7 +72,7 @@ export function Header() {
       preview: item.body,
       when: new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(item.createdAt)),
       unread: !item.readAt,
-      href: item.targetUrl ?? (doctor ? "/medecin/messages" : "/patient/profil?tab=messages"),
+      href: item.targetUrl ?? (doctor ? "/medecin/messages" : "/patient/profil?activeContent=messages&tab=messages"),
     }));
 
   async function logout() {
