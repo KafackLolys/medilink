@@ -1,4 +1,5 @@
-import { Activity, Baby, BadgeCheck, Brain, CalendarCheck, FileText, Flower2, HeartPulse, LayoutGrid, MapPin, MessageCircle, Plus, Search, ShieldCheck, Sparkles, Star, Stethoscope } from "lucide-react";
+import RecommendedDoctors from "./recommended-doctors";
+import { Activity, Baby, BadgeCheck, Brain, CalendarCheck, FileText, Flower2, HeartPulse, LayoutGrid, MapPin, MessageCircle, Plus, Search, ShieldCheck, Sparkles, Stethoscope } from "lucide-react";
 
 const SPECIALTIES = [
   { n: "Médecine générale", I: Stethoscope }, { n: "Pédiatrie", I: Baby }, { n: "Cardiologie", I: HeartPulse },
@@ -10,12 +11,6 @@ const STEPS = [
   { t: "Échangez avec un médecin", d: "Consultez les propositions reçues et posez vos questions.", I: MessageCircle },
   { t: "Confirmez le rendez-vous", d: "Choisissez une date adaptée, le médecin vient chez vous.", I: CalendarCheck },
 ];
-const DOCS = [
-  { i: "SM", n: "Dr Sarah Mbarga", s: "Médecine générale", r: "4,9", x: "12 ans d’expérience", a: "Disponible demain", c: "bg-secondary/15 text-secondary" },
-  { i: "PN", n: "Dr Paul Ndongo", s: "Cardiologie", r: "4,8", x: "15 ans d’expérience", a: "Disponible cette semaine", c: "bg-primary/10 text-primary" },
-  { i: "AK", n: "Dr Aïcha Kamga", s: "Pédiatrie", r: "5,0", x: "9 ans d’expérience", a: "Disponible aujourd’hui", c: "bg-warn/20 text-amber-700" },
-];
-
 export default function Home() {
   return (
     <div className="relative min-h-dvh overflow-hidden bg-surface">
@@ -132,29 +127,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Médecins */}
-        <section className="mt-16">
-          <h2 className="text-2xl font-extrabold tracking-tight text-night">Médecins recommandés près de chez vous</h2>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {DOCS.map((d) => (
-              <article key={d.n} className="rounded-3xl bg-white p-5 shadow-[0_8px_30px_-16px_rgba(30,41,59,.15)]">
-                <div className="flex items-center gap-4">
-                  <span className={`grid size-16 place-items-center rounded-2xl text-xl font-bold ${d.c}`}>{d.i}</span>
-                  <div>
-                    <h3 className="font-bold">{d.n}</h3>
-                    <p className="text-sm text-muted">{d.s}</p>
-                    <p className="mt-1 flex items-center gap-1 text-sm font-semibold"><Star className="size-4 fill-warn text-warn" /> {d.r} <span className="font-normal text-muted">· {d.x}</span></p>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">{d.a}</span>
-                  <span className="flex items-center gap-1 text-xs font-semibold text-success"><BadgeCheck className="size-4" /> Vérifié</span>
-                </div>
-                <button className="mt-4 h-11 w-full rounded-full bg-primary/[.08] font-semibold text-primary">Voir le profil</button>
-              </article>
-            ))}
-          </div>
-        </section>
+        <RecommendedDoctors />
 
         {/* Bandeau besoin médical */}
         <section className="mt-16 flex flex-col items-start justify-between gap-6 rounded-[2rem] bg-secondary/[.09] p-8 sm:flex-row sm:items-center lg:p-10">

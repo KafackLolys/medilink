@@ -21,6 +21,8 @@ export interface DoctorDirectoryItem {
   professionalAddress: string | null;
   serviceCity?: string | null;
   serviceDistricts?: string[];
+  blockedDates?: string[];
+  appointmentDurationMinutes?: number;
   modes: ConsultationMode[];
   availability: DoctorAvailability[];
   rating: number | null;

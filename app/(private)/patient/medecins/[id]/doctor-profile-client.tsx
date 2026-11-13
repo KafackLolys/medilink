@@ -35,6 +35,12 @@ export default function DoctorProfileClient({ id }: { id: string }) {
     );
   }
 
+  const openSlots = doctor.availability.filter((slot) => slot.isAvailable);
+  const hasMode = doctor.modes.length > 0;
+  const hasWeeklySlots = openSlots.length > 0;
+  const blockedDates = new Set(doctor.blockedDates ?? []);
+
+
   const initials = doctor.name
     .replace(/^Dr\.?\s*/i, "")
     .split(/\s+/)
@@ -104,9 +110,9 @@ export default function DoctorProfileClient({ id }: { id: string }) {
           </section>
           <section className="mt-5">
             <h2 className="font-bold text-ink">Disponibilités hebdomadaires</h2>
-            {doctor.availability.length > 0 ? (
+            {openSlots.length > 0 ? (
               <ul className="mt-2 space-y-2">
-                {doctor.availability.map((slot) => (
+                {openSlots.map((slot) => (
                   <li key={`${slot.weekday}-${slot.startTime}`} className="flex items-center gap-2 text-sm text-muted">
                     <CalendarDays className="size-4 text-primary" aria-hidden />
                     {days[slot.weekday] ?? slot.weekday} · {slot.startTime}–{slot.endTime}
@@ -115,15 +121,22 @@ export default function DoctorProfileClient({ id }: { id: string }) {
               </ul>
             ) : <p className="mt-2 text-sm text-muted">Aucune plage horaire n’est renseignée.</p>}
           </section>
-          {doctor.modes.length > 0 && doctor.availability.length > 0 ? (
-            <Link href={`/patient/medecins/${doctor.id}/rendez-vous`} className="mt-7 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary px-6 font-semibold text-white sm:w-auto">
-              <CalendarDays className="size-5" aria-hidden /> Prendre rendez-vous
-            </Link>
-          ) : (
-            <button type="button" disabled className="mt-7 inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-slate-400 px-6 font-semibold text-white sm:w-auto">
-              <CalendarDays className="size-5" aria-hidden /> Rendez-vous indisponible
-            </button>
-          )}
+          <section className="mt-5 space-y-2" aria-live="polite">
+            {hasMode && hasWeeklySlots ? (
+              <p className="text-sm text-emerald-700">Certains jours sont ouverts aux rendez-vous. Les dates bloquées et les horaires exacts sont vérifiés au moment de la réservation.</p>
+            ) : (
+              <p className="text-sm text-amber-700">
+                {/* {!hasMode ? "Le médecin doit encore activer un mode de consultation. " : "Le médecin doit encore définir ses horaires. "}
+                Le calendrier reste consultable, mais les dates non autorisées ne sont pas réservables. */}
+              </p>
+            )}
+            {blockedDates.size > 0 && (
+              <p className="text-sm text-muted">Dates exceptionnellement bloquées : {[...blockedDates].sort().join(", ")}.</p>
+            )}
+          </section>
+          <Link href={`/patient/medecins/${doctor.id}/rendez-vous`} className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary px-6 font-semibold text-white sm:w-auto">
+            <CalendarDays className="size-5" aria-hidden /> Consulter les rendez-vous
+          </Link>
         </div>
       </article>
       <DoctorRatingSection doctorId={doctor.id} />

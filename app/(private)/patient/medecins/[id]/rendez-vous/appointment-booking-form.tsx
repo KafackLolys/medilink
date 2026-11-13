@@ -32,7 +32,8 @@ export default function AppointmentBookingForm({ doctorId }: { doctorId: string 
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const minimumDate = new Date().toLocaleDateString("en-CA");
+  const today = new Date();
+  const minimumDate = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
 
   if (loading) {
     return <div role="status" className="mx-auto max-w-2xl rounded-3xl bg-white p-8 text-center text-muted">Chargement du profil…</div>;
@@ -50,9 +51,24 @@ export default function AppointmentBookingForm({ doctorId }: { doctorId: string 
   const weekday = selectedDate
     ? weekdayNames[selectedDate.getDay()]
     : null;
-  const matchingSlots = doctor.availability.filter((slot) => slot.weekday === weekday);
-  const isSlotAvailable = matchingSlots.some(
-    (slot) => time >= slot.startTime && time < slot.endTime,
+  const blockedDates = new Set(doctor.blockedDates ?? []);
+  const isBlockedDate = Boolean(date && blockedDates.has(date));
+  const matchingSlots = doctor.availability.filter(
+    (slot) => slot.isAvailable && slot.weekday === weekday && !isBlockedDate,
+  );
+  const durationMinutes = doctor.appointmentDurationMinutes ?? 30;
+  const toMinutes = (value: string): number => {
+    const [hours, minutes] = value.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+  const isFutureDate = Boolean(date && date >= minimumDate);
+  const isFutureTime = Boolean(date && time && new Date(`${date}T${time}`).getTime() > Date.now());
+  const isSlotAvailable = Boolean(
+    !isBlockedDate && isFutureDate && isFutureTime && time &&
+    matchingSlots.some((slot) =>
+      toMinutes(time) >= toMinutes(slot.startTime) &&
+      toMinutes(time) + durationMinutes <= toMinutes(slot.endTime),
+    ),
   );
   const initials = doctor.name
     .replace(/^Dr\.?\s*/i, "")
@@ -124,9 +140,9 @@ export default function AppointmentBookingForm({ doctorId }: { doctorId: string 
           </div>
         </div>
 
-        {doctor.availability.length === 0 || doctor.modes.length === 0 ? (
+        {!doctor.availability.some((slot) => slot.isAvailable) || doctor.modes.length === 0 ? (
           <p className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-800">
-            Ce médecin n’a pas encore renseigné ses disponibilités ou ses modes de consultation. Vous ne pouvez pas envoyer de demande pour le moment.
+            Ce médecin n’a pas encore activé de plages horaires ou de mode de consultation. Vous pouvez consulter son profil, mais aucun rendez-vous ne peut être demandé tant que ces informations ne sont pas configurées.
           </p>
         ) : (
           <>
@@ -142,14 +158,16 @@ export default function AppointmentBookingForm({ doctorId }: { doctorId: string 
               </label>
             </div>
             {date && (
-              <p className={`text-sm ${matchingSlots.length > 0 ? "text-muted" : "text-amber-700"}`}>
-                {matchingSlots.length > 0
-                  ? `Plages proposées : ${matchingSlots.map((slot) => `${slot.startTime}–${slot.endTime}`).join(", ")}`
-                  : "Aucune disponibilité ce jour-là."}
+              <p aria-live="polite" className={`text-sm ${matchingSlots.length > 0 ? "text-muted" : "text-amber-700"}`}>
+                {isBlockedDate
+                  ? "Le médecin a bloqué cette date : aucun rendez-vous possible."
+                  : matchingSlots.length > 0
+                    ? `Plages proposées : ${matchingSlots.map((slot) => `${slot.startTime}–${slot.endTime}`).join(", ")} (durée : ${durationMinutes} min)`
+                    : "Ce jour est indisponible : choisissez un jour activé dans les horaires hebdomadaires."}
               </p>
             )}
             {time && date && !isSlotAvailable && matchingSlots.length > 0 && (
-              <p role="status" className="text-sm text-amber-700">L’heure choisie n’est pas comprise dans une plage disponible.</p>
+              <p role="status" className="text-sm text-amber-700">L’heure choisie doit être future et permettre une consultation entière dans la plage disponible.</p>
             )}
             <fieldset>
               <legend className="text-sm font-semibold text-ink">Type de consultation</legend>
