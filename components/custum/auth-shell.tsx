@@ -1,5 +1,6 @@
 import { BadgeCheck, CalendarCheck, HeartPulse, MapPin } from "lucide-react";
 import type { ReactNode } from "react";
+import { GoogleAuthButton } from "./google-auth-button";
 
 export function Logo({ light = false }: { light?: boolean }) {
   return (
@@ -81,20 +82,7 @@ export function AuthShell({ children, compact = false }: { children: ReactNode; 
 }
 
 export function GoogleButton({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white text-base font-semibold text-ink transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
-    >
-      <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-        <path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.700C21.800 18.900 23 15.900 23 12.300z" />
-        <path fill="#34A853" d="M12 23c3.100 0 5.700-1 7.600-2.800l-3.700-2.900c-1 .7-2.300 1.100-3.900 1.100-3 0-5.500-2-6.400-4.700H1.800v3A11 11 0 0 0 12 23z" />
-        <path fill="#FBBC05" d="M5.600 13.700a6.600 6.600 0 0 1 0-4.200v-3H1.800a11 11 0 0 0 0 10.200l3.800-3z" />
-        <path fill="#EA4335" d="M12 5.400c1.700 0 3.200.6 4.400 1.700l3.300-3.300A11 11 0 0 0 1.800 6.500l3.800 3C6.500 6.800 9 5.400 12 5.400z" />
-      </svg>
-      {label}
-    </button>
-  );
+  return <GoogleAuthButton label={label} />;
 }
 
 export function OrDivider({ children }: { children: ReactNode }) {
