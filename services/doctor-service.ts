@@ -19,6 +19,8 @@ export interface DoctorDirectoryItem {
   consultationFee: number;
   currency: string;
   professionalAddress: string | null;
+  serviceCity?: string | null;
+  serviceDistricts?: string[];
   modes: ConsultationMode[];
   availability: DoctorAvailability[];
   rating: number | null;

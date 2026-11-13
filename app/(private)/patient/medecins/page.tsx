@@ -14,7 +14,7 @@ export default function FindDoctorPage() {
   const [city, setCity] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [filters, setFilters] = useState({ q: "", city: "", specialty: "" });
-  const { doctors, specialties, loading, error } = useDoctors(filters);
+  const { doctors, specialties, loading, error, retry } = useDoctors(filters);
 
   function resetFilters() {
     setQuery("");
@@ -72,7 +72,7 @@ export default function FindDoctorPage() {
         </div>
       </form>
 
-      {error && <p role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error}</p>}
+      {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-rose-50 p-4 text-sm text-rose-700"><span>{error}</span><button type="button" onClick={retry} className="rounded-lg border border-rose-300 px-3 py-2 font-semibold">Réessayer</button></div>}
 
       <p className="text-[15px] text-muted" aria-live="polite">
         <strong className="text-ink">{loading ? "…" : doctors.length}</strong>{" "}

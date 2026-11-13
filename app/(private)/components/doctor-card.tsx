@@ -55,7 +55,7 @@ export function DoctorCard({ doctor }: { doctor: DoctorDirectoryItem }) {
       </p>
       <p className="mt-1.5 flex items-center gap-1.5 text-[15px] text-muted">
         <MapPin className="size-4 shrink-0" aria-hidden />
-        {doctor.professionalAddress ?? "Secteur non renseigné"}
+        {doctor.professionalAddress ?? doctor.serviceCity ?? "Secteur non renseigné"}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {nextSlot ? (

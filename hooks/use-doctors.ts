@@ -7,49 +7,52 @@ import {
   type DoctorFilters,
 } from "@/services/doctor-service";
 
+type DoctorsState = {
+  key: string;
+  status: "loading" | "success" | "error";
+  doctors: DoctorDirectoryItem[];
+  error: string | null;
+};
+
+/** A request result is shown only if it belongs to the current filter key. */
 export function useDoctors(filters: DoctorFilters) {
-  const [response, setResponse] = useState<{
-    key: string;
-    doctors: DoctorDirectoryItem[];
-    specialties: string[];
-  } | null>(null);
-  const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
-  const query = filters.q ?? "";
+  const [state, setState] = useState<DoctorsState | null>(null);
+  const [specialties, setSpecialties] = useState<string[]>([]);
+  const [retryNumber, setRetryNumber] = useState(0);
+  const q = filters.q ?? "";
   const city = filters.city ?? "";
   const specialty = filters.specialty ?? "";
-  const key = JSON.stringify([query, city, specialty]);
+  const key = JSON.stringify([q, city, specialty, retryNumber]);
 
   useEffect(() => {
     let active = true;
-    doctorService
-      .list({ q: query, city, specialty })
+    setState({ key, status: "loading", doctors: [], error: null });
+
+    doctorService.list({ q, city, specialty })
       .then((result) => {
         if (!active) return;
-        setResponse({ key, doctors: result.doctors, specialties: result.specialties });
+        setSpecialties(result.specialties);
+        setState({ key, status: "success", doctors: result.doctors, error: null });
       })
       .catch((cause: unknown) => {
-        if (active) {
-          setFailure({
-            key,
-            message:
-              cause instanceof Error
-                ? cause.message
-                : "Impossible de charger la liste des médecins.",
-          });
-        }
+        if (!active) return;
+        setState({
+          key,
+          status: "error",
+          doctors: [],
+          error: cause instanceof Error ? cause.message : "Impossible de charger la liste des médecins.",
+        });
       });
 
-    return () => {
-      active = false;
-    };
-  }, [city, key, query, specialty]);
+    return () => { active = false; };
+  }, [key, q, city, specialty]);
 
-  const currentResponse = response?.key === key ? response : null;
-  const currentFailure = failure?.key === key ? failure : null;
+  const current = state?.key === key ? state : null;
   return {
-    doctors: currentResponse?.doctors ?? [],
-    specialties: currentResponse?.specialties ?? [],
-    loading: !currentResponse && !currentFailure,
-    error: currentFailure?.message ?? null,
+    doctors: current?.doctors ?? [],
+    specialties,
+    loading: !current || current.status === "loading",
+    error: current?.error ?? null,
+    retry: () => setRetryNumber((value) => value + 1),
   };
 }
