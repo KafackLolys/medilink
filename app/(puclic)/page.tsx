@@ -69,16 +69,16 @@ export default function Home() {
             </div>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <a href="#" className="rounded-3xl bg-primary/[.07] p-5 transition hover:bg-primary/10">
+              <div className="rounded-3xl bg-primary/[.07] p-5 transition hover:bg-primary/10">
                 <span className="mb-3 grid size-10 place-items-center rounded-2xl bg-white text-primary shadow-sm"><Stethoscope className="size-5" /></span>
                 <p className="text-lg font-bold text-primary">Trouver un médecin</p>
                 <p className="mt-1 text-[15px] text-muted">Consultez les profils et demandez un rendez-vous.</p>
-              </a>
-              <a href="#" className="rounded-3xl bg-secondary/[.09] p-5 transition hover:bg-secondary/[.13]">
+              </div>
+              <div className="rounded-3xl bg-secondary/[.09] p-5 transition hover:bg-secondary/[.13]">
                 <span className="mb-3 grid size-10 place-items-center rounded-2xl bg-white text-secondary shadow-sm"><FileText className="size-5" /></span>
                 <p className="text-lg font-bold text-secondary">Publier un besoin médical</p>
                 <p className="mt-1 text-[15px] text-muted">Décrivez votre situation pour recevoir des propositions.</p>
-              </a>
+              </div>
             </div>
           </div>
 
