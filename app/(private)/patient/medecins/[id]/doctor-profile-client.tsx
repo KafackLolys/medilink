@@ -1,6 +1,7 @@
 "use client";
 
 import { useDoctor } from "@/hooks/use-doctor";
+import { DoctorRatingSection } from "./doctor-rating-section";
 import { ArrowLeft, BadgeCheck, CalendarDays, MapPin, Star, Video } from "lucide-react";
 import Link from "next/link";
 
@@ -125,6 +126,7 @@ export default function DoctorProfileClient({ id }: { id: string }) {
           )}
         </div>
       </article>
+      <DoctorRatingSection doctorId={doctor.id} />
     </div>
   );
 }

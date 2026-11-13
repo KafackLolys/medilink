@@ -23,7 +23,7 @@ interface AuthState extends PersistedAuthState {
 }
 
 const authStorage = createJSONStorage<PersistedAuthState>(() => {
-  // Zustand can be imported during SSR. Never access localStorage on the server.
+  // Importable on the server without using browser-only APIs.
   if (typeof window === "undefined") {
     return {
       getItem: () => null,
@@ -32,16 +32,25 @@ const authStorage = createJSONStorage<PersistedAuthState>(() => {
     };
   }
   return {
-    getItem: (name) => window.localStorage.getItem(name),
+    // A non-remembered session survives full page navigation within the same tab.
+    getItem: (name) => window.sessionStorage.getItem(name) ?? window.localStorage.getItem(name),
     setItem: (name, value) => {
       const persisted = JSON.parse(value) as { state?: PersistedAuthState };
       if (persisted.state?.rememberMe) {
         window.localStorage.setItem(name, value);
+        window.sessionStorage.removeItem(name);
+      } else if (persisted.state?.session) {
+        window.sessionStorage.setItem(name, value);
+        window.localStorage.removeItem(name);
       } else {
+        window.sessionStorage.removeItem(name);
         window.localStorage.removeItem(name);
       }
     },
-    removeItem: (name) => window.localStorage.removeItem(name),
+    removeItem: (name) => {
+      window.localStorage.removeItem(name);
+      window.sessionStorage.removeItem(name);
+    },
   };
 });
 
@@ -98,7 +107,7 @@ export const authStore = create<AuthState>()(
       name: "medilink-auth",
       storage: authStorage,
       partialize: (state): PersistedAuthState => ({
-        session: state.rememberMe ? state.session : null,
+        session: state.session,
         rememberMe: state.rememberMe,
       }),
     },
