@@ -1,6 +1,7 @@
 "use client";
 
 import { doctorCard, DoctorPageHeading } from "../../components/doctor-ui";
+import { NotificationTypeIcon } from "@/components/custum/activity-popover";
 import { Bell, Check, MessageCircle, Send, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
@@ -54,7 +55,7 @@ export default function DoctorMessagesPage() {
               const read = Boolean(notification.readAt);
               const href = notification.targetUrl ?? "/medecin/messages";
               return <article key={notification.id} className={`flex gap-3 py-4 last:pb-0 ${!read ? "bg-blue-50/40" : ""}`}>
-                <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${read ? "bg-slate-100 text-muted" : "bg-blue-100 text-primary"}`}><Bell className="size-5" aria-hidden /></span>
+                <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${read ? "bg-slate-100 text-muted" : "bg-blue-100 text-primary"}`}><NotificationTypeIcon type={notification.type} title={notification.title} className="size-5" /></span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2"><p className="text-sm font-bold text-night">{notification.title}</p>{!read && <span className="size-2 rounded-full bg-primary" aria-label="Non lue" />}</div>
                   <p className="mt-1 text-sm text-muted">{notification.body}</p>

@@ -27,7 +27,7 @@ type MessageReadEvent = {
   readAt: string;
 };
 
-export function useMessaging() {
+export function useMessaging(enabled = true, trackSelectedConversation = true) {
   const socket = useRealtimeSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState("");
@@ -91,6 +91,11 @@ export function useMessaging() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     void refreshConversations();
     const onVisibilityChange = () => {
       if (!document.hidden) {
@@ -103,9 +108,10 @@ export function useMessaging() {
     return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [refreshConversations, refreshMessages]);
+  }, [enabled, refreshConversations, refreshMessages]);
 
   useEffect(() => {
+    if (!enabled || !trackSelectedConversation) return;
     if (!selectedId) {
       messageRequestId.current += 1;
       setMessages([]);
@@ -113,10 +119,10 @@ export function useMessaging() {
     }
 
     void refreshMessages(selectedId);
-  }, [selectedId, refreshMessages]);
+  }, [enabled, trackSelectedConversation, selectedId, refreshMessages]);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!enabled || !socket) return;
 
     const onConversationUpdated = (event: ConversationUpdatedEvent) => {
       setConversations((current) =>
@@ -180,7 +186,7 @@ export function useMessaging() {
     };
 
     const joinSelectedConversation = () => {
-      if (!selectedId) return;
+      if (!trackSelectedConversation || !selectedId) return;
       socket.emit(
         "conversation:join",
         { conversationId: selectedId },
@@ -192,8 +198,10 @@ export function useMessaging() {
 
     const onReady = () => {
       void refreshConversations();
-      joinSelectedConversation();
-      if (selectedId) void refreshMessages(selectedId);
+      if (trackSelectedConversation) {
+        joinSelectedConversation();
+        if (selectedId) void refreshMessages(selectedId);
+      }
     };
 
     socket.on("conversation:updated", onConversationUpdated);
@@ -210,11 +218,31 @@ export function useMessaging() {
       socket.off("message:read", onMessageRead);
       socket.off("conversation:read", onConversationRead);
       socket.off("connection:ready", onReady);
-      if (selectedId && isRealtimeSocketReady(socket)) {
+      if (trackSelectedConversation && selectedId && isRealtimeSocketReady(socket)) {
         socket.emit("conversation:leave", { conversationId: selectedId });
       }
     };
-  }, [socket, selectedId, refreshConversations, refreshMessages]);
+  }, [enabled, trackSelectedConversation, socket, selectedId, refreshConversations, refreshMessages]);
+
+  const markConversationRead = useCallback(async (conversationId: string) => {
+    try {
+      await messageService.markConversationRead(conversationId);
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === conversationId
+            ? { ...conversation, unreadCount: 0 }
+            : conversation,
+        ),
+      );
+      setError(null);
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Impossible de marquer la conversation comme lue.",
+      );
+    }
+  }, []);
 
   const send = useCallback(
     async (body: string): Promise<boolean> => {
@@ -265,5 +293,7 @@ export function useMessaging() {
     sending,
     error,
     send,
+    refreshConversations,
+    markConversationRead,
   };
 }

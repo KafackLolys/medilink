@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
+import { NotificationTypeIcon } from "@/components/custum/activity-popover";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useMessaging } from "@/hooks/use-messaging";
 import { useAuthSession } from "@/hooks/use-auth-session";
@@ -135,7 +136,7 @@ export function PatientMessagesContent() {
                     <span
                       className={`grid size-10 shrink-0 place-items-center rounded-xl ${read ? "bg-slate-100 text-muted" : "bg-blue-100 text-primary"}`}
                     >
-                      <Bell className="size-5" aria-hidden />
+                      <NotificationTypeIcon type={notification.type} title={notification.title} className="size-5" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

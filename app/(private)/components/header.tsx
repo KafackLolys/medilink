@@ -12,7 +12,8 @@ import { useAuthSession } from "@/hooks/use-auth-session";
 import { clearBrowserSession } from "@/lib/client-auth-session";
 import { authService } from "@/services/auth-service";
 import { useNotifications } from "@/hooks/use-notifications";
-import type { ActivityMessage, ActivityNotification } from "@/components/custum/activity-popover";
+import { useMessaging } from "@/hooks/use-messaging";
+import type { ActivityNotification } from "@/components/custum/activity-popover";
 import { unregisterWebPush } from "@/services/web-push";
 
 const LINKS = [
@@ -49,31 +50,71 @@ export function Header() {
   const isActive = useActive();
   const session = useAuthSession();
   const user = session?.user;
-  const notificationFeed = useNotifications(10, true);
+  const notificationFeed = useNotifications(20, true);
+  const messaging = useMessaging(!admin, false);
   const fullName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
     : admin ? "Administration" : doctor ? "Espace médecin" : PATIENT_PROFILE.name;
   const initials = user
     ? [user.firstName, user.lastName].filter(Boolean).map((part) => part![0]).join("").slice(0, 2).toUpperCase() || (doctor ? DOCTOR_PROFILE.initials : PATIENT_PROFILE.initials)
     : admin ? "AD" : doctor ? DOCTOR_PROFILE.initials : PATIENT_PROFILE.initials;
-  const activities: ActivityNotification[] = notificationFeed.items.map((item) => ({
-    id: item.id,
-    title: item.title,
-    text: item.body,
-    when: new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(item.createdAt)),
-    unread: !item.readAt,
-    href: item.targetUrl ?? (doctor ? "/medecin/messages" : "/patient/profil?activeContent=messages&tab=messages"),
-  }));
-  const messageActivities: ActivityMessage[] = notificationFeed.items
-    .filter((item) => item.type === "new_message")
+  const conversationIds = new Set(messaging.conversations.map((conversation) => conversation.id));
+  const getConversationId = (targetUrl: string | null) => {
+    if (!targetUrl) return null;
+    try {
+      return new URL(targetUrl, "https://medilink.local").searchParams.get("conversation");
+    } catch {
+      return null;
+    }
+  };
+  const duplicateMessageNotifications = notificationFeed.items.filter(
+    (item) => item.type === "new_message" && conversationIds.has(getConversationId(item.targetUrl) ?? ""),
+  );
+  const duplicateUnreadCount = duplicateMessageNotifications.filter((item) => !item.readAt).length;
+  const notificationActivities = notificationFeed.items
+    .filter((item) => !duplicateMessageNotifications.includes(item))
     .map((item) => ({
-      id: item.id,
-      sender: "Nouveau message",
-      preview: item.body,
-      when: new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(item.createdAt)),
-      unread: !item.readAt,
-      href: item.targetUrl ?? (doctor ? "/medecin/messages" : "/patient/profil?activeContent=messages&tab=messages"),
+      activity: {
+        id: item.id,
+        kind: "notification" as const,
+        type: item.type,
+        title: item.title,
+        text: item.body,
+        when: new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(item.createdAt)),
+        unread: !item.readAt,
+        href: item.targetUrl ?? (doctor ? "/medecin/messages?tab=notifications" : "/patient/profil?activeContent=messages&tab=notifications"),
+      },
+      timestamp: new Date(item.createdAt).getTime(),
     }));
+  const messageActivities = messaging.conversations.map((conversation) => {
+    const timestamp = conversation.lastMessageAt ? new Date(conversation.lastMessageAt).getTime() : 0;
+    const href = doctor
+      ? `/medecin/messages?conversation=${encodeURIComponent(conversation.id)}`
+      : `/patient/profil?activeContent=messages&conversation=${encodeURIComponent(conversation.id)}`;
+    return {
+      activity: {
+        id: `message:${conversation.id}`,
+        kind: "message" as const,
+        conversationId: conversation.id,
+        unreadCount: conversation.unreadCount,
+        type: "new_message",
+        title: conversation.peerName || "Nouveau message",
+        text: conversation.preview || "Ouvrir la conversation",
+        when: timestamp > 0
+          ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(timestamp))
+          : "Conversation",
+        unread: conversation.unreadCount > 0,
+        href,
+      },
+      timestamp,
+    };
+  });
+  const activities: ActivityNotification[] = [...notificationActivities, ...messageActivities]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .map(({ activity }) => activity);
+  const combinedUnreadCount = Math.max(0, notificationFeed.unreadCount - duplicateUnreadCount)
+    + messaging.conversations.reduce((total, conversation) => total + conversation.unreadCount, 0);
+
 
   async function logout() {
     try {
@@ -110,16 +151,20 @@ export function Header() {
           {!admin && (
             <ActivityPopover
               trigger={
-                <button type="button" aria-label="Ouvrir les notifications et messages" className="relative grid size-11 place-items-center rounded-full text-ink transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25">
+                <button type="button" aria-label="Ouvrir les notifications" className="relative grid size-11 place-items-center rounded-full text-ink transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25">
                   <Bell className="size-5" aria-hidden />
-                  {notificationFeed.unreadCount > 0 && <span className="absolute right-2 top-1 grid min-w-5 place-items-center rounded-full border-2 border-white bg-danger px-1 text-[10px] font-bold leading-4 text-white">{notificationFeed.unreadCount > 99 ? "99+" : notificationFeed.unreadCount}</span>}
+                  {combinedUnreadCount > 0 && <span className="absolute right-2 top-1 grid min-w-5 place-items-center rounded-full border-2 border-white bg-danger px-1 text-[10px] font-bold leading-4 text-white">{combinedUnreadCount > 99 ? "99+" : combinedUnreadCount}</span>}
                 </button>
               }
               notifications={admin ? [] : activities}
-              messages={admin ? [] : messageActivities}
               allNotificationsHref={doctor ? "/medecin/messages?tab=notifications" : "/patient/profil?activeContent=messages&tab=notifications"}
-              allMessagesHref={doctor ? "/medecin/messages" : "/patient/profil?activeContent=messages&tab=messages"}
-              onNotificationOpen={(id) => void notificationFeed.markRead(id)}
+              onActivityOpen={(activity) => {
+                if (activity.kind === "message" && activity.conversationId) {
+                  void messaging.markConversationRead(activity.conversationId);
+                } else {
+                  void notificationFeed.markRead(activity.id);
+                }
+              }}
             />
           )}
 
