@@ -27,7 +27,7 @@ type MessageReadEvent = {
   readAt: string;
 };
 
-export function useMessaging() {
+export function useMessaging(enabled = true) {
   const socket = useRealtimeSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState("");
@@ -91,6 +91,11 @@ export function useMessaging() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     void refreshConversations();
     const onVisibilityChange = () => {
       if (!document.hidden) {
@@ -103,9 +108,10 @@ export function useMessaging() {
     return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [refreshConversations, refreshMessages]);
+  }, [enabled, refreshConversations, refreshMessages]);
 
   useEffect(() => {
+    if (!enabled) return;
     if (!selectedId) {
       messageRequestId.current += 1;
       setMessages([]);
@@ -113,10 +119,10 @@ export function useMessaging() {
     }
 
     void refreshMessages(selectedId);
-  }, [selectedId, refreshMessages]);
+  }, [enabled, selectedId, refreshMessages]);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!enabled || !socket) return;
 
     const onConversationUpdated = (event: ConversationUpdatedEvent) => {
       setConversations((current) =>
@@ -214,7 +220,27 @@ export function useMessaging() {
         socket.emit("conversation:leave", { conversationId: selectedId });
       }
     };
-  }, [socket, selectedId, refreshConversations, refreshMessages]);
+  }, [enabled, socket, selectedId, refreshConversations, refreshMessages]);
+
+  const markConversationRead = useCallback(async (conversationId: string) => {
+    try {
+      await messageService.markConversationRead(conversationId);
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === conversationId
+            ? { ...conversation, unreadCount: 0 }
+            : conversation,
+        ),
+      );
+      setError(null);
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Impossible de marquer la conversation comme lue.",
+      );
+    }
+  }, []);
 
   const send = useCallback(
     async (body: string): Promise<boolean> => {
@@ -265,5 +291,7 @@ export function useMessaging() {
     sending,
     error,
     send,
+    refreshConversations,
+    markConversationRead,
   };
 }
