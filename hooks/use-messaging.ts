@@ -27,7 +27,7 @@ type MessageReadEvent = {
   readAt: string;
 };
 
-export function useMessaging(enabled = true) {
+export function useMessaging(enabled = true, trackSelectedConversation = true) {
   const socket = useRealtimeSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState("");
@@ -111,7 +111,7 @@ export function useMessaging(enabled = true) {
   }, [enabled, refreshConversations, refreshMessages]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !trackSelectedConversation) return;
     if (!selectedId) {
       messageRequestId.current += 1;
       setMessages([]);
@@ -119,7 +119,7 @@ export function useMessaging(enabled = true) {
     }
 
     void refreshMessages(selectedId);
-  }, [enabled, selectedId, refreshMessages]);
+  }, [enabled, trackSelectedConversation, selectedId, refreshMessages]);
 
   useEffect(() => {
     if (!enabled || !socket) return;
@@ -186,7 +186,7 @@ export function useMessaging(enabled = true) {
     };
 
     const joinSelectedConversation = () => {
-      if (!selectedId) return;
+      if (!trackSelectedConversation || !selectedId) return;
       socket.emit(
         "conversation:join",
         { conversationId: selectedId },
@@ -198,8 +198,10 @@ export function useMessaging(enabled = true) {
 
     const onReady = () => {
       void refreshConversations();
-      joinSelectedConversation();
-      if (selectedId) void refreshMessages(selectedId);
+      if (trackSelectedConversation) {
+        joinSelectedConversation();
+        if (selectedId) void refreshMessages(selectedId);
+      }
     };
 
     socket.on("conversation:updated", onConversationUpdated);
@@ -216,11 +218,11 @@ export function useMessaging(enabled = true) {
       socket.off("message:read", onMessageRead);
       socket.off("conversation:read", onConversationRead);
       socket.off("connection:ready", onReady);
-      if (selectedId && isRealtimeSocketReady(socket)) {
+      if (trackSelectedConversation && selectedId && isRealtimeSocketReady(socket)) {
         socket.emit("conversation:leave", { conversationId: selectedId });
       }
     };
-  }, [enabled, socket, selectedId, refreshConversations, refreshMessages]);
+  }, [enabled, trackSelectedConversation, socket, selectedId, refreshConversations, refreshMessages]);
 
   const markConversationRead = useCallback(async (conversationId: string) => {
     try {
