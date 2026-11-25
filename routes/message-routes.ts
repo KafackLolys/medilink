@@ -6,4 +6,6 @@ export const messageRoutes = {
     `${API_URL}/messages/conversations/${encodeURIComponent(conversationId)}`,
   Send: (conversationId: string) =>
     `${API_URL}/messages/conversations/${encodeURIComponent(conversationId)}`,
+  Read: (conversationId: string) =>
+    `${API_URL}/messages/conversations/${encodeURIComponent(conversationId)}/read`,
 };
