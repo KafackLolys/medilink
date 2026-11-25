@@ -12,7 +12,7 @@ import { useAuthSession } from "@/hooks/use-auth-session";
 import { clearBrowserSession } from "@/lib/client-auth-session";
 import { authService } from "@/services/auth-service";
 import { useNotifications } from "@/hooks/use-notifications";
-import type { ActivityMessage, ActivityNotification } from "@/components/custum/activity-popover";
+import type { ActivityNotification } from "@/components/custum/activity-popover";
 import { unregisterWebPush } from "@/services/web-push";
 
 const LINKS = [
@@ -58,22 +58,14 @@ export function Header() {
     : admin ? "AD" : doctor ? DOCTOR_PROFILE.initials : PATIENT_PROFILE.initials;
   const activities: ActivityNotification[] = notificationFeed.items.map((item) => ({
     id: item.id,
+    type: item.type,
     title: item.title,
     text: item.body,
     when: new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(item.createdAt)),
     unread: !item.readAt,
-    href: item.targetUrl ?? (doctor ? "/medecin/messages" : "/patient/profil?activeContent=messages&tab=messages"),
+    href: item.targetUrl ?? (doctor ? "/medecin/messages?tab=notifications" : "/patient/profil?activeContent=messages&tab=notifications"),
   }));
-  const messageActivities: ActivityMessage[] = notificationFeed.items
-    .filter((item) => item.type === "new_message")
-    .map((item) => ({
-      id: item.id,
-      sender: "Nouveau message",
-      preview: item.body,
-      when: new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(item.createdAt)),
-      unread: !item.readAt,
-      href: item.targetUrl ?? (doctor ? "/medecin/messages" : "/patient/profil?activeContent=messages&tab=messages"),
-    }));
+
 
   async function logout() {
     try {
@@ -110,15 +102,13 @@ export function Header() {
           {!admin && (
             <ActivityPopover
               trigger={
-                <button type="button" aria-label="Ouvrir les notifications et messages" className="relative grid size-11 place-items-center rounded-full text-ink transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25">
+                <button type="button" aria-label="Ouvrir les notifications" className="relative grid size-11 place-items-center rounded-full text-ink transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25">
                   <Bell className="size-5" aria-hidden />
                   {notificationFeed.unreadCount > 0 && <span className="absolute right-2 top-1 grid min-w-5 place-items-center rounded-full border-2 border-white bg-danger px-1 text-[10px] font-bold leading-4 text-white">{notificationFeed.unreadCount > 99 ? "99+" : notificationFeed.unreadCount}</span>}
                 </button>
               }
               notifications={admin ? [] : activities}
-              messages={admin ? [] : messageActivities}
               allNotificationsHref={doctor ? "/medecin/messages?tab=notifications" : "/patient/profil?activeContent=messages&tab=notifications"}
-              allMessagesHref={doctor ? "/medecin/messages" : "/patient/profil?activeContent=messages&tab=messages"}
               onNotificationOpen={(id) => void notificationFeed.markRead(id)}
             />
           )}
