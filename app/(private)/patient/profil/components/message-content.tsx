@@ -41,7 +41,8 @@ export function PatientMessagesContent() {
     event.preventDefault();
     const text = draft.trim();
     if (!text || !messaging.selected) return;
-    if (await messaging.send(text)) setDraft("");
+    setDraft("");
+    await messaging.send(text);
   }
 
   return (
@@ -320,7 +321,7 @@ export function PatientMessagesContent() {
                     </li>
                   )}
                 {messaging.messages.map((message) => {
-                  const mine = message.senderUserId === session?.user.id;
+                  const mine = (message.senderUserId === session?.user.id || Boolean(message.deliveryStatus));
                   return (
                     <li
                       key={message.id}
@@ -339,6 +340,7 @@ export function PatientMessagesContent() {
                             dateStyle: "short",
                             timeStyle: "short",
                           }).format(new Date(message.sentAt))}
+                          {message.deliveryStatus === "sending" ? " · Envoi…" : message.deliveryStatus === "failed" ? " · Échec de l’envoi" : ""}
                         </p>
                       </div>
                     </li>
