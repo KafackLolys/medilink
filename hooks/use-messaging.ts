@@ -37,6 +37,8 @@ export function useMessaging() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messageRequestId = useRef(0);
+  const selectedIdRef = useRef(selectedId);
+  selectedIdRef.current = selectedId;
 
   const refreshConversations = useCallback(async () => {
     try {
@@ -93,14 +95,15 @@ export function useMessaging() {
     const onVisibilityChange = () => {
       if (!document.hidden) {
         void refreshConversations();
-        if (selectedId) void refreshMessages(selectedId);
+        const currentConversationId = selectedIdRef.current;
+        if (currentConversationId) void refreshMessages(currentConversationId);
       }
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [refreshConversations, refreshMessages, selectedId]);
+  }, [refreshConversations, refreshMessages]);
 
   useEffect(() => {
     if (!selectedId) {
