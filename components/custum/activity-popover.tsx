@@ -33,9 +33,8 @@ interface ActivityPopoverProps {
   onNotificationOpen?: (id: string) => void;
 }
 
-function NotificationIcon({ type, title }: { type?: string; title?: string }) {
+export function NotificationTypeIcon({ type, title, className = "size-4" }: { type?: string; title?: string; className?: string }) {
   const normalizedTitle = (title ?? "").toLocaleLowerCase("fr");
-  const className = "size-4";
 
   if (normalizedTitle.includes("demande de rendez-vous")) {
     return <CalendarCheck className={className} aria-hidden />;
@@ -87,7 +86,7 @@ export function ActivityPopover({
                 className={`flex gap-3 px-4 py-3 transition hover:bg-slate-50 ${notification.unread ? "bg-blue-50/40" : ""}`}
               >
                 <span className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl ${notification.unread ? "bg-blue-100 text-primary" : "bg-slate-100 text-muted"}`}>
-                  <NotificationIcon type={notification.type} title={notification.title} />
+                  <NotificationTypeIcon type={notification.type} title={notification.title} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-start justify-between gap-2">
