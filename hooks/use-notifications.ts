@@ -135,17 +135,11 @@ export function useNotifications(pageSize = 20, poll = false) {
 
     load();
 
-    let interval: number | null = null;
     let onVisibilityChange: (() => void) | null = null;
     let onPush: (() => void) | null = null;
 
-    // Aucun polling ni écouteur push pour les administrateurs.
+    // Les administrateurs ne reçoivent ni événements temps réel ni push.
     if (!isAdmin()) {
-      interval = poll
-        ? window.setInterval(() => {
-            if (!document.hidden) load();
-          }, 30_000)
-        : null;
       onVisibilityChange = () => {
         if (!document.hidden) load();
       };
@@ -175,7 +169,6 @@ export function useNotifications(pageSize = 20, poll = false) {
     return () => {
       active = false;
       stopListening?.();
-      if (interval) window.clearInterval(interval);
       if (onVisibilityChange) {
         document.removeEventListener("visibilitychange", onVisibilityChange);
       }
