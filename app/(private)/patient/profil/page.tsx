@@ -393,7 +393,7 @@ export default function PatientProfilePage() {
                   />
                 </label>
                 <label className="text-sm font-semibold text-ink">
-                  Ville et quartier
+                  Ville, quartier
                   <input
                     value={profile.location === "Localisation non renseignée" ? "" : profile.location}
                     onChange={(event) =>
