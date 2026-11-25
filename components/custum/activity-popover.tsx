@@ -18,6 +18,9 @@ import type { ReactElement } from "react";
 
 export interface ActivityNotification {
   id: string;
+  kind?: "notification" | "message";
+  conversationId?: string;
+  unreadCount?: number;
   type?: string;
   title?: string;
   text: string;
@@ -30,7 +33,7 @@ interface ActivityPopoverProps {
   trigger: ReactElement;
   notifications: ActivityNotification[];
   allNotificationsHref: string;
-  onNotificationOpen?: (id: string) => void;
+  onActivityOpen?: (activity: ActivityNotification) => void;
 }
 
 export function NotificationTypeIcon({ type, title, className = "size-4" }: { type?: string; title?: string; className?: string }) {
@@ -61,7 +64,7 @@ export function ActivityPopover({
   trigger,
   notifications,
   allNotificationsHref,
-  onNotificationOpen,
+  onActivityOpen,
 }: ActivityPopoverProps) {
   return (
     <Popover>
@@ -69,32 +72,38 @@ export function ActivityPopover({
       <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-100 p-0 shadow-xl">
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-4">
           <div>
-            <h2 className="font-bold text-night">Notifications</h2>
-            <p className="mt-0.5 text-xs text-muted">Les dernières actualités de votre compte</p>
+            <h2 className="font-bold text-night">Activités</h2>
+            <p className="mt-0.5 text-xs text-muted">Messages et notifications réunis</p>
           </div>
           <span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-primary">
             <Bell className="size-4" aria-hidden />
           </span>
         </div>
 
-        <ul aria-label="Notifications récentes" className="max-h-96 divide-y divide-slate-100 overflow-y-auto">
-          {notifications.map((notification) => (
-            <li key={notification.id}>
+        <ul aria-label="Activités récentes" className="max-h-96 divide-y divide-slate-100 overflow-y-auto">
+          {notifications.map((activity) => (
+            <li key={activity.id}>
               <Link
-                href={notification.href ?? allNotificationsHref}
-                onClick={() => onNotificationOpen?.(notification.id)}
-                className={`flex gap-3 px-4 py-3 transition hover:bg-slate-50 ${notification.unread ? "bg-blue-50/40" : ""}`}
+                href={activity.href ?? allNotificationsHref}
+                onClick={() => onActivityOpen?.(activity)}
+                className={`flex gap-3 px-4 py-3 transition hover:bg-slate-50 ${activity.unread ? "bg-blue-50/40" : ""}`}
               >
-                <span className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl ${notification.unread ? "bg-blue-100 text-primary" : "bg-slate-100 text-muted"}`}>
-                  <NotificationTypeIcon type={notification.type} title={notification.title} />
+                <span className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl ${activity.unread ? "bg-blue-100 text-primary" : "bg-slate-100 text-muted"}`}>
+                  <NotificationTypeIcon type={activity.kind === "message" ? "new_message" : activity.type} title={activity.title} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-bold text-ink">{notification.title ?? "Notification"}</span>
-                    {notification.unread && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" aria-label="Non lue" />}
+                    <span className="text-sm font-bold text-ink">{activity.title ?? "Notification"}</span>
+                    {activity.kind === "message" && (activity.unreadCount ?? 0) > 0 ? (
+                      <span className="grid min-w-5 shrink-0 place-items-center rounded-full bg-primary px-1.5 text-[10px] font-bold leading-5 text-white">
+                        {(activity.unreadCount ?? 0) > 99 ? "99+" : activity.unreadCount}
+                      </span>
+                    ) : activity.unread ? (
+                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" aria-label="Non lue" />
+                    ) : null}
                   </span>
-                  <span className="mt-0.5 block text-sm leading-5 text-muted">{notification.text}</span>
-                  <span className="mt-1 block text-xs text-muted">{notification.when}</span>
+                  <span className="mt-0.5 block text-sm leading-5 text-muted">{activity.text}</span>
+                  <span className="mt-1 block text-xs text-muted">{activity.when}</span>
                 </span>
               </Link>
             </li>
@@ -104,7 +113,7 @@ export function ActivityPopover({
               <span className="mx-auto grid size-10 place-items-center rounded-xl bg-surface text-muted">
                 <Bell className="size-5" aria-hidden />
               </span>
-              <p className="mt-2 text-sm font-semibold text-ink">Aucune notification</p>
+              <p className="mt-2 text-sm font-semibold text-ink">Aucune activité</p>
               <p className="mt-1 text-xs text-muted">Tout est à jour pour le moment.</p>
             </li>
           )}
@@ -112,7 +121,7 @@ export function ActivityPopover({
 
         <div className="border-t border-slate-100 p-2">
           <Link href={allNotificationsHref} className="flex h-10 items-center justify-center rounded-xl text-sm font-bold text-primary transition hover:bg-primary/5">
-            Toutes les notifications
+            Voir toutes les activités
           </Link>
         </div>
       </PopoverContent>
