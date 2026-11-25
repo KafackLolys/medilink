@@ -38,4 +38,8 @@ export const messageService = {
       body: JSON.stringify({ body }),
     });
   },
+
+  markConversationRead(conversationId: string): Promise<unknown> {
+    return apiRequest(messageRoutes.Read(conversationId), { method: "PATCH" });
+  },
 };
