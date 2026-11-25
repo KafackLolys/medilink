@@ -29,7 +29,8 @@ export default function DoctorMessagesPage() {
     event.preventDefault();
     const message = text.trim();
     if (!message || !messaging.selected) return;
-    if (await messaging.send(message)) setText("");
+    setText("");
+    await messaging.send(message);
   }
 
   return (
@@ -102,10 +103,10 @@ export default function DoctorMessagesPage() {
                 {messaging.messagesLoading && <li className="text-center text-sm text-muted  absolute top-0 left-1/2 -translate-x-1/2">Chargement des messages…</li>}
                 {!messaging.messagesLoading && messaging.messages.length === 0 && <li className="text-center text-sm text-muted">Aucun message. Envoyez le premier message de la conversation.</li>}
                 {messaging.messages.map((message) => {
-                  const mine = message.senderUserId === session?.user.id;
+                  const mine = (message.senderUserId === session?.user.id || Boolean(message.deliveryStatus));
                   return <li key={message.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] rounded-2xl px-3 py-2 ${mine ? "rounded-br-sm bg-primary text-white" : "rounded-bl-sm bg-white text-ink shadow-sm"}`}>
-                    <p className="whitespace-pre-wrap text-sm leading-5">{message.body}</p><p className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-blue-100" : "text-muted"}`}>{new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(message.sentAt))}</p>
+                    <p className="whitespace-pre-wrap text-sm leading-5">{message.body}</p><p className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-blue-100" : "text-muted"}`}>{new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(message.sentAt))}{message.deliveryStatus === "sending" ? " · Envoi…" : message.deliveryStatus === "failed" ? " · Échec de l’envoi" : ""}</p>
                   </div>
                 </li>;
                 })}
