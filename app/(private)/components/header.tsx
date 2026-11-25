@@ -51,7 +51,7 @@ export function Header() {
   const session = useAuthSession();
   const user = session?.user;
   const notificationFeed = useNotifications(20, true);
-  const messaging = useMessaging(!admin);
+  const messaging = useMessaging(!admin, false);
   const fullName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
     : admin ? "Administration" : doctor ? "Espace médecin" : PATIENT_PROFILE.name;
