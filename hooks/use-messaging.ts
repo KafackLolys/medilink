@@ -1,13 +1,35 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { Socket } from "socket.io-client";
 import {
   messageService,
   type Conversation,
   type ConversationMessage,
 } from "@/services/message-service";
+import { isRealtimeSocketReady } from "@/services/realtime-socket";
+import { useRealtimeSocket } from "@/hooks/use-realtime-socket";
+
+type NewMessageEvent = {
+  conversationId: string;
+  message: ConversationMessage;
+};
+
+type ConversationUpdatedEvent = {
+  conversationId: string;
+  preview: string;
+  lastMessageAt: string;
+  unreadCount: number;
+};
+
+type MessageReadEvent = {
+  conversationId: string;
+  readerUserId: string;
+  readAt: string;
+};
 
 export function useMessaging() {
+  const socket = useRealtimeSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
@@ -68,41 +90,129 @@ export function useMessaging() {
   }, []);
 
   useEffect(() => {
-    void Promise.resolve().then(() => refreshConversations());
-    const interval = window.setInterval(() => {
-      if (!document.hidden) void refreshConversations();
-    }, 15_000);
+    void refreshConversations();
     const onVisibilityChange = () => {
-      if (!document.hidden) void refreshConversations();
+      if (!document.hidden) {
+        void refreshConversations();
+        if (selectedId) void refreshMessages(selectedId);
+      }
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
-      window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [refreshConversations]);
+  }, [refreshConversations, refreshMessages, selectedId]);
 
   useEffect(() => {
     if (!selectedId) {
       messageRequestId.current += 1;
+      setMessages([]);
       return;
     }
-    let active = true;
-    const load = () => {
-      if (!active) return;
-      void refreshMessages(selectedId).then(() => {
-        if (active) void refreshConversations();
-      });
+
+    void refreshMessages(selectedId);
+  }, [selectedId, refreshMessages]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const onConversationUpdated = (event: ConversationUpdatedEvent) => {
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === event.conversationId
+            ? {
+                ...conversation,
+                preview: event.preview,
+                lastMessageAt: event.lastMessageAt,
+                unreadCount: event.unreadCount,
+              }
+            : conversation,
+        ),
+      );
     };
-    void Promise.resolve().then(load);
-    const interval = window.setInterval(() => {
-      if (!document.hidden) void load();
-    }, 8_000);
+
+    const onNewMessage = (event: NewMessageEvent) => {
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === event.conversationId
+            ? {
+                ...conversation,
+                preview: event.message.body,
+                lastMessageAt: event.message.sentAt,
+              }
+            : conversation,
+        ),
+      );
+
+      if (event.conversationId === selectedId) {
+        setMessages((current) =>
+          current.some((message) => message.id === event.message.id)
+            ? current
+            : [...current, event.message],
+        );
+      }
+    };
+
+    const onMessageRead = (event: MessageReadEvent) => {
+      if (event.conversationId !== selectedId) return;
+      setMessages((current) =>
+        current.map((message) =>
+          message.senderUserId !== event.readerUserId && !message.readAt
+            ? { ...message, readAt: event.readAt }
+            : message,
+        ),
+      );
+    };
+
+    const onConversationRead = (event: {
+      conversationId: string;
+      unreadCount: number;
+    }) => {
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === event.conversationId
+            ? { ...conversation, unreadCount: event.unreadCount }
+            : conversation,
+        ),
+      );
+    };
+
+    const joinSelectedConversation = () => {
+      if (!selectedId) return;
+      socket.emit(
+        "conversation:join",
+        { conversationId: selectedId },
+        (result: { joined?: boolean } | undefined) => {
+          if (result?.joined) void refreshMessages(selectedId);
+        },
+      );
+    };
+
+    const onReady = () => {
+      void refreshConversations();
+      joinSelectedConversation();
+      if (selectedId) void refreshMessages(selectedId);
+    };
+
+    socket.on("conversation:updated", onConversationUpdated);
+    socket.on("message:new", onNewMessage);
+    socket.on("message:read", onMessageRead);
+    socket.on("conversation:read", onConversationRead);
+    socket.on("connection:ready", onReady);
+
+    if (isRealtimeSocketReady(socket)) onReady();
+
     return () => {
-      active = false;
-      window.clearInterval(interval);
+      socket.off("conversation:updated", onConversationUpdated);
+      socket.off("message:new", onNewMessage);
+      socket.off("message:read", onMessageRead);
+      socket.off("conversation:read", onConversationRead);
+      socket.off("connection:ready", onReady);
+      if (selectedId && isRealtimeSocketReady(socket)) {
+        socket.emit("conversation:leave", { conversationId: selectedId });
+      }
     };
-  }, [selectedId, refreshConversations, refreshMessages]);
+  }, [socket, selectedId, refreshConversations, refreshMessages]);
 
   const send = useCallback(
     async (body: string): Promise<boolean> => {
@@ -116,7 +226,17 @@ export function useMessaging() {
             ? current
             : [...current, sentMessage],
         );
-        await refreshConversations();
+        setConversations((current) =>
+          current.map((conversation) =>
+            conversation.id === selectedId
+              ? {
+                  ...conversation,
+                  preview: sentMessage.body,
+                  lastMessageAt: sentMessage.sentAt,
+                }
+              : conversation,
+          ),
+        );
         return true;
       } catch (cause) {
         setError(
@@ -129,7 +249,7 @@ export function useMessaging() {
         setSending(false);
       }
     },
-    [refreshConversations, selectedId],
+    [selectedId],
   );
 
   return {
