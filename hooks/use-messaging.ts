@@ -37,6 +37,7 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messageRequestId = useRef(0);
+  const sendingRef = useRef(false);
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
 
@@ -153,11 +154,21 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
       );
 
       if (event.conversationId === selectedId) {
-        setMessages((current) =>
-          current.some((message) => message.id === event.message.id)
-            ? current
-            : [...current, event.message],
-        );
+        setMessages((current) => {
+          if (current.some((message) => message.id === event.message.id)) return current;
+          const optimisticIndex = current.findIndex((message) =>
+            message.deliveryStatus === "sending" &&
+            message.body === event.message.body
+          );
+          if (optimisticIndex >= 0) {
+            return current.map((message, index) =>
+              index === optimisticIndex
+                ? { ...event.message, deliveryStatus: "sent" as const }
+                : message
+            );
+          }
+          return [...current, event.message];
+        });
       }
     };
 
@@ -246,16 +257,28 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
 
   const send = useCallback(
     async (body: string): Promise<boolean> => {
-      if (!selectedId || !body.trim()) return false;
+      if (!selectedId || !body.trim() || sendingRef.current) return false;
+      const normalizedBody = body.trim();
+      const optimisticId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const optimisticMessage: ConversationMessage = {
+        id: optimisticId,
+        senderUserId: "__optimistic_self__",
+        body: normalizedBody,
+        sentAt: new Date().toISOString(),
+        readAt: null,
+        deliveryStatus: "sending",
+      };
+      sendingRef.current = true;
       setSending(true);
       setError(null);
+      setMessages((current) => [...current, optimisticMessage]);
       try {
-        const sentMessage = await messageService.sendMessage(selectedId, body.trim());
-        setMessages((current) =>
-          current.some((message) => message.id === sentMessage.id)
-            ? current
-            : [...current, sentMessage],
-        );
+        const sentMessage = await messageService.sendMessage(selectedId, normalizedBody);
+        setMessages((current) => current.map((message) =>
+          message.id === optimisticId || message.id === sentMessage.id
+            ? { ...sentMessage, deliveryStatus: "sent" as const }
+            : message
+        ));
         setConversations((current) =>
           current.map((conversation) =>
             conversation.id === selectedId
@@ -269,6 +292,11 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
         );
         return true;
       } catch (cause) {
+        setMessages((current) => current.map((message) =>
+          message.id === optimisticId
+            ? { ...message, deliveryStatus: "failed" as const }
+            : message
+        ));
         setError(
           cause instanceof Error
             ? cause.message
@@ -276,6 +304,7 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
         );
         return false;
       } finally {
+        sendingRef.current = false;
         setSending(false);
       }
     },
