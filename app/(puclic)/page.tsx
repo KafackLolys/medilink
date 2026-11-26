@@ -29,7 +29,7 @@ export default function Home() {
         <header className="mt-5 flex items-center justify-between rounded-full border border-white bg-white/80 py-2.5 pl-5 pr-2.5 shadow-[0_8px_30px_-12px_rgba(30,41,59,.12)] backdrop-blur">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2.5">
-              <span className="grid size-9 place-items-center rounded-xl bg-primary text-white"><Plus className="size-5" strokeWidth={3} /></span>
+              <span className="grid size-9 place-items-center rounded-xl bg-primary text-white"><HeartPulse className="size-5" strokeWidth={3} /></span>
               <span className="text-xl font-extrabold tracking-tight text-night">MedLink</span>
             </div>
             <nav className="hidden gap-7 text-[15px] font-medium text-muted md:flex">
