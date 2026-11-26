@@ -22,7 +22,7 @@ export type DoctorProposalStatus = "Envoyée" | "En attente" | "Acceptée" | "Re
 export const DOCTOR_PROFILE_DETAILS = {
   fullName: "Dr. David Menye",
   phone: "+237 6 70 12 34 56",
-  email: "david.menye@medlink.example",
+  email: "david.menye@MediLink.example",
   specialty: "Médecine générale",
   secondarySpecialties: ["Médecine préventive", "Gériatrie"],
   degrees: ["Doctorat en médecine · Université de Yaoundé I", "Diplôme de médecine familiale"],
@@ -140,11 +140,11 @@ export const DOCTOR_PROPOSALS: {
   status: DoctorProposalStatus;
   response?: string;
 }[] = [
-  { id: "proposal-1", needId: "request-1", needTitle: "Besoin de consultation générale", patient: "Patient · Mimboman", sentAt: "Aujourd’hui, 09:12", appointment: "Aujourd’hui · 15:00", mode: "À domicile", fee: 15000, status: "En attente" },
-  { id: "proposal-2", needId: "request-3", needTitle: "Suivi pédiatrique", patient: "Parent · Biyem-Assi", sentAt: "Hier, 16:40", appointment: "Demain · 10:30", mode: "À domicile", fee: 18000, status: "Acceptée", response: "La proposition a été acceptée. Rendez-vous confirmé." },
-  { id: "proposal-3", needId: "request-2", needTitle: "Douleurs articulaires", patient: "Patient · Centre-ville", sentAt: "10 nov. 2026", appointment: "12 nov. · 11:00", mode: "Téléconsultation", fee: 10000, status: "Refusée", response: "Le patient a choisi une autre proposition." },
-  { id: "proposal-4", needId: "request-4", needTitle: "Tension artérielle", patient: "Patient · Bastos", sentAt: "3 nov. 2026", appointment: "6 nov. · 09:00", mode: "À domicile", fee: 15000, status: "Expirée" },
-];
+    { id: "proposal-1", needId: "request-1", needTitle: "Besoin de consultation générale", patient: "Patient · Mimboman", sentAt: "Aujourd’hui, 09:12", appointment: "Aujourd’hui · 15:00", mode: "À domicile", fee: 15000, status: "En attente" },
+    { id: "proposal-2", needId: "request-3", needTitle: "Suivi pédiatrique", patient: "Parent · Biyem-Assi", sentAt: "Hier, 16:40", appointment: "Demain · 10:30", mode: "À domicile", fee: 18000, status: "Acceptée", response: "La proposition a été acceptée. Rendez-vous confirmé." },
+    { id: "proposal-3", needId: "request-2", needTitle: "Douleurs articulaires", patient: "Patient · Centre-ville", sentAt: "10 nov. 2026", appointment: "12 nov. · 11:00", mode: "Téléconsultation", fee: 10000, status: "Refusée", response: "Le patient a choisi une autre proposition." },
+    { id: "proposal-4", needId: "request-4", needTitle: "Tension artérielle", patient: "Patient · Bastos", sentAt: "3 nov. 2026", appointment: "6 nov. · 09:00", mode: "À domicile", fee: 15000, status: "Expirée" },
+  ];
 
 export const DOCTOR_SCHEDULE = [
   { id: "monday", day: "Lundi", enabled: true, start: "08:00", end: "17:00" },
@@ -169,17 +169,23 @@ export const DOCTOR_BLOCKED_DATES = [
 ];
 
 export const DOCTOR_CONVERSATIONS = [
-  { id: "conversation-1", patient: "Mme Alice N. Ekotto", initials: "AE", preview: "Merci docteur, je serai disponible à 9 h.", time: "09:42", unread: 2, requestId: "request-1", messages: [
-    { id: "m1", from: "patient", text: "Bonjour docteur, pouvez-vous confirmer votre heure d’arrivée ?", time: "09:20" },
-    { id: "m2", from: "doctor", text: "Bonjour, je vous confirme notre rendez-vous à 9 h.", time: "09:32" },
-    { id: "m3", from: "patient", text: "Merci docteur, je serai disponible à 9 h.", time: "09:42" },
-  ] },
-  { id: "conversation-2", patient: "M. Jean C. Mbida", initials: "JM", preview: "La téléconsultation est-elle toujours prévue ?", time: "Hier", unread: 1, requestId: "request-2", messages: [
-    { id: "m4", from: "patient", text: "La téléconsultation est-elle toujours prévue ?", time: "Hier · 18:10" },
-  ] },
-  { id: "conversation-3", patient: "Parent de Samuel", initials: "PS", preview: "J’ai ajouté un document au dossier.", time: "10 nov.", unread: 0, requestId: "request-3", messages: [
-    { id: "m5", from: "patient", text: "J’ai ajouté un document au dossier.", time: "10 nov. · 14:25" },
-  ] },
+  {
+    id: "conversation-1", patient: "Mme Alice N. Ekotto", initials: "AE", preview: "Merci docteur, je serai disponible à 9 h.", time: "09:42", unread: 2, requestId: "request-1", messages: [
+      { id: "m1", from: "patient", text: "Bonjour docteur, pouvez-vous confirmer votre heure d’arrivée ?", time: "09:20" },
+      { id: "m2", from: "doctor", text: "Bonjour, je vous confirme notre rendez-vous à 9 h.", time: "09:32" },
+      { id: "m3", from: "patient", text: "Merci docteur, je serai disponible à 9 h.", time: "09:42" },
+    ]
+  },
+  {
+    id: "conversation-2", patient: "M. Jean C. Mbida", initials: "JM", preview: "La téléconsultation est-elle toujours prévue ?", time: "Hier", unread: 1, requestId: "request-2", messages: [
+      { id: "m4", from: "patient", text: "La téléconsultation est-elle toujours prévue ?", time: "Hier · 18:10" },
+    ]
+  },
+  {
+    id: "conversation-3", patient: "Parent de Samuel", initials: "PS", preview: "J’ai ajouté un document au dossier.", time: "10 nov.", unread: 0, requestId: "request-3", messages: [
+      { id: "m5", from: "patient", text: "J’ai ajouté un document au dossier.", time: "10 nov. · 14:25" },
+    ]
+  },
 ];
 
 export const DOCTOR_NOTIFICATIONS = [

@@ -53,7 +53,7 @@ export function PatientMessagesContent() {
           Messages
         </h1>
         <p className="mt-2 text-lg text-muted">
-          Échangez avec les médecins et l’équipe MedLink.
+          Échangez avec les médecins et l’équipe MediLink.
         </p>
       </header>
 

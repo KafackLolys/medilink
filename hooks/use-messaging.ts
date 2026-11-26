@@ -27,6 +27,31 @@ type MessageReadEvent = {
   readAt: string;
 };
 
+function createClientMessageId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
+
+function findPersistedMessage(
+  items: ConversationMessage[],
+  target: { clientMessageId?: string; body: string; sentAt: string },
+): boolean {
+  if (
+    target.clientMessageId &&
+    items.some((message) => message.clientMessageId === target.clientMessageId)
+  ) {
+    return true;
+  }
+  const sentAtMs = new Date(target.sentAt).getTime();
+  return items.some(
+    (message) =>
+      message.body === target.body &&
+      new Date(message.sentAt).getTime() >= sentAtMs - 5_000,
+  );
+}
+
 export function useMessaging(enabled = true, trackSelectedConversation = true) {
   const socket = useRealtimeSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -160,7 +185,9 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
           // event, even if the HTTP request later times out or fails.
           const optimisticIndex = current.findIndex((message) =>
             (message.deliveryStatus === "sending" || message.deliveryStatus === "failed") &&
-            message.body === event.message.body
+            ((event.message.clientMessageId &&
+              message.clientMessageId === event.message.clientMessageId) ||
+              message.body === event.message.body)
           );
           if (optimisticIndex >= 0) {
             return current.map((message, index) =>
@@ -261,12 +288,15 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
     async (body: string): Promise<boolean> => {
       if (!selectedId || !body.trim() || sendingRef.current) return false;
       const normalizedBody = body.trim();
-      const optimisticId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const clientMessageId = createClientMessageId();
+      const optimisticId = `pending-${clientMessageId}`;
+      const optimisticSentAt = new Date().toISOString();
       const optimisticMessage: ConversationMessage = {
         id: optimisticId,
         senderUserId: "__optimistic_self__",
         body: normalizedBody,
-        sentAt: new Date().toISOString(),
+        clientMessageId,
+        sentAt: optimisticSentAt,
         readAt: null,
         deliveryStatus: "sending",
       };
@@ -275,7 +305,11 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
       setError(null);
       setMessages((current) => [...current, optimisticMessage]);
       try {
-        const sentMessage = await messageService.sendMessage(selectedId, normalizedBody);
+        const sentMessage = await messageService.sendMessage(
+          selectedId,
+          normalizedBody,
+          clientMessageId,
+        );
         setMessages((current) => current.map((message) =>
           message.id === optimisticId || message.id === sentMessage.id
             ? { ...sentMessage, deliveryStatus: "sent" as const }
@@ -294,6 +328,22 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
         );
         return true;
       } catch (cause) {
+        try {
+          const refreshed = await messageService.listMessages(selectedId);
+          if (
+            findPersistedMessage(refreshed.items, {
+              clientMessageId,
+              body: normalizedBody,
+              sentAt: optimisticSentAt,
+            })
+          ) {
+            setMessages(refreshed.items);
+            setError(null);
+            return true;
+          }
+        } catch {
+          // Keep the original error and failed state if reconciliation is unavailable.
+        }
         setMessages((current) => current.map((message) =>
           message.id === optimisticId
             ? { ...message, deliveryStatus: "failed" as const }
@@ -320,17 +370,22 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
         (message) => message.id === messageId && message.deliveryStatus === "failed",
       );
       if (!failedMessage) return false;
+      const clientMessageId = failedMessage.clientMessageId ?? createClientMessageId();
 
       sendingRef.current = true;
       setSending(true);
       setError(null);
       setMessages((current) => current.map((message) =>
         message.id === messageId
-          ? { ...message, deliveryStatus: "sending" as const }
+          ? { ...message, clientMessageId, deliveryStatus: "sending" as const }
           : message
       ));
       try {
-        const sentMessage = await messageService.sendMessage(selectedId, failedMessage.body);
+        const sentMessage = await messageService.sendMessage(
+          selectedId,
+          failedMessage.body,
+          clientMessageId,
+        );
         setMessages((current) => current.map((message) =>
           message.id === messageId || message.id === sentMessage.id
             ? { ...sentMessage, deliveryStatus: "sent" as const }
@@ -347,12 +402,13 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
         // lost. Reconcile from the conversation API before showing a failure.
         try {
           const refreshed = await messageService.listMessages(selectedId);
-          const failedAt = new Date(failedMessage.sentAt).getTime();
-          const wasAccepted = refreshed.items.some((message) =>
-            message.body === failedMessage.body &&
-            new Date(message.sentAt).getTime() >= failedAt
-          );
-          if (wasAccepted) {
+          if (
+            findPersistedMessage(refreshed.items, {
+              clientMessageId,
+              body: failedMessage.body,
+              sentAt: failedMessage.sentAt,
+            })
+          ) {
             setMessages(refreshed.items);
             setError(null);
             return true;

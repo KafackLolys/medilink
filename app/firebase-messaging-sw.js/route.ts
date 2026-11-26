@@ -16,11 +16,20 @@ export async function GET() {
     });
   }
 
+  const rawSiteUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "")
+  ).replace(/\/+$/, "");
+
   const script = `
 importScripts("https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-compat.js");
 firebase.initializeApp(${JSON.stringify(config)});
 const messaging = firebase.messaging();
+const configuredOrigin = ${JSON.stringify(rawSiteUrl)};
 messaging.onBackgroundMessage((payload) => {
   const data = payload.data || {};
   const title = data.title || "MediLink";
@@ -32,18 +41,21 @@ messaging.onBackgroundMessage((payload) => {
 });
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data && event.notification.data.url
+  const rawUrl = event.notification.data && event.notification.data.url
     ? event.notification.data.url
     : "/";
+  const baseOrigin = configuredOrigin || self.location.origin;
+  const targetUrl = new URL(rawUrl, baseOrigin).href;
+  const targetOrigin = new URL(targetUrl).origin;
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     for (const client of windows) {
-      if (client.url.startsWith(self.location.origin) && "focus" in client) {
-        await client.navigate(url);
+      if (client.url.startsWith(targetOrigin) && "focus" in client) {
+        await client.navigate(targetUrl);
         return client.focus();
       }
     }
-    return self.clients.openWindow(new URL(url, self.location.origin).href);
+    return self.clients.openWindow(targetUrl);
   })());
 });
 `;

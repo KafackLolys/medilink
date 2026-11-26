@@ -121,11 +121,17 @@ export async function listenForWebPush(
       typeof title === "string" &&
       typeof body === "string"
     ) {
-      new Notification(title, {
+      const targetUrl = payload.data?.url ?? "/";
+      const notification = new Notification(title, {
         body,
         icon: "https://raw.githubusercontent.com/KafackLolys/medilink-flutter/main/assets/icon/favicon.png",
-        data: { url: payload.data?.url ?? "/" },
+        data: { url: targetUrl },
       });
+      notification.onclick = () => {
+        window.focus();
+        window.location.assign(new URL(targetUrl, window.location.origin).href);
+        notification.close();
+      };
     }
   });
 }

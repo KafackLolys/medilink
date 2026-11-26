@@ -46,5 +46,5 @@ export const PATIENT_PROFILE_DOCUMENTS = [
 
 export const PATIENT_PROFILE_MESSAGES = [
   { id: "doctor", sender: "Dr Martin Nguema", text: "Bonjour, je vous confirme notre prochain rendez-vous.", when: "Il y a 2 h" },
-  { id: "support", sender: "Équipe MedLink", text: "Votre dossier médical est prêt à être complété.", when: "Hier" },
+  { id: "support", sender: "Équipe MediLink", text: "Votre dossier médical est prêt à être complété.", when: "Hier" },
 ] as const;

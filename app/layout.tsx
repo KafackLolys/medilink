@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Medihome",
-  description: "Trouvez un médecin vérifié près de chez vous et recevez-le à domicile.",
+  title: "MediLink",
+  description:
+    "Trouvez un médecin vérifié près de chez vous et recevez-le à domicile.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -263,7 +263,7 @@ export function Header() {
         <div className="flex items-center gap-6">
           <Link
             href={admin ? "/admin" : doctor ? "/medecin" : "/patient"}
-            aria-label="MedLink, tableau de bord"
+            aria-label="MediLink, tableau de bord"
           >
             <Logo />
           </Link>
@@ -392,7 +392,7 @@ export function Header() {
                   </button>
                 }
                 title="Confirmer la déconnexion"
-                description="Vous allez être déconnecté de votre compte MedLink. Vous pourrez vous reconnecter à tout moment."
+                description="Vous allez être déconnecté de votre compte MediLink. Vous pourrez vous reconnecter à tout moment."
                 confirmLabel="Se déconnecter"
                 onConfirm={logout}
               />

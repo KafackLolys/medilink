@@ -7,7 +7,7 @@ export function Logo({ light = false }: { light?: boolean }) {
       <span className={`grid size-10 place-items-center rounded-xl ${light ? "bg-white text-primary" : "bg-primary text-white"}`}>
         <HeartPulse className="size-5" aria-hidden />
       </span>
-      <span className={`text-xl font-extrabold tracking-tight ${light ? "text-white" : "text-night"}`}>Medihome</span>
+      <span className={`text-xl font-extrabold tracking-tight ${light ? "text-white" : "text-night"}`}>MediLink</span>
     </div>
   );
 }
@@ -73,7 +73,7 @@ export function AuthShell({ children, compact = false }: { children: ReactNode; 
         <div className="md:hidden"><Logo /></div>
         <div className={`m-auto w-full max-w-md py-8 md:py-2 ${compact ? "md:max-w-[18.25rem]" : "md:max-w-xs lg:max-w-sm"}`}>{children}</div>
         <p className="text-center text-sm text-muted md:text-xs lg:text-sm">
-          Medihome ne remplace pas une consultation. En cas d’urgence médicale, contactez immédiatement les services d’urgence.
+          MediLink ne remplace pas une consultation. En cas d’urgence médicale, contactez immédiatement les services d’urgence.
         </p>
       </main>
     </div>

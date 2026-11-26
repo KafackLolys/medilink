@@ -16,6 +16,7 @@ export interface ConversationMessage {
   id: string;
   senderUserId: string;
   body: string;
+  clientMessageId?: string;
   sentAt: string;
   readAt: string | null;
   deliveryStatus?: "sending" | "sent" | "failed";
@@ -33,10 +34,14 @@ export const messageService = {
   sendMessage(
     conversationId: string,
     body: string,
+    clientMessageId?: string,
   ): Promise<ConversationMessage> {
     return apiRequest(messageRoutes.Send(conversationId), {
       method: "POST",
-      body: JSON.stringify({ body }),
+      body: JSON.stringify({
+        body,
+        ...(clientMessageId ? { clientMessageId } : {}),
+      }),
     });
   },
 

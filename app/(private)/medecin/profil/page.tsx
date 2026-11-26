@@ -232,7 +232,7 @@ export default function DoctorProfilePage() {
         </SectionTitle>
         <DoctorDocumentsManager initialDocuments={profile.documents} />
         <p className="mt-2 text-xs text-muted">
-          La vérification des documents est réalisée par l’équipe MedLink.
+          La vérification des documents est réalisée par l’équipe MediLink.
         </p>
       </section>
 

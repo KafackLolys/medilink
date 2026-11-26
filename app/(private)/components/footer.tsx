@@ -20,9 +20,9 @@ export function Footer() {
         </div>
         <p className="mt-8 flex items-start gap-2 rounded-2xl bg-secondary/[.08] px-4 py-3 text-sm text-ink">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-secondary" aria-hidden />
-          MedLink ne remplace pas une consultation. En cas d’urgence médicale, contactez immédiatement les services d’urgence sans attendre la réponse d’un médecin.
+          MediLink ne remplace pas une consultation. En cas d’urgence médicale, contactez immédiatement les services d’urgence sans attendre la réponse d’un médecin.
         </p>
-        <p className="mt-6 text-sm text-muted">© 2026 MedLink</p>
+        <p className="mt-6 text-sm text-muted">© 2026 MediLink</p>
       </div>
     </footer>
   );
