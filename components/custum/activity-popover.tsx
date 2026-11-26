@@ -14,8 +14,7 @@ import {
   Stethoscope,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, type ReactElement } from "react";
-import { isWebPushConfigured, registerWebPush } from "@/services/web-push";
+import type { ReactElement } from "react";
 
 export interface ActivityNotification {
   id: string;
@@ -67,27 +66,6 @@ export function ActivityPopover({
   allNotificationsHref,
   onActivityOpen,
 }: ActivityPopoverProps) {
-  const [pushState, setPushState] = useState<"idle" | "loading" | "enabled" | "error">("idle");
-  const [pushMessage, setPushMessage] = useState<string | null>(null);
-
-  async function enablePush() {
-    if (!isWebPushConfigured()) {
-      setPushState("error");
-      setPushMessage("Les notifications web ne sont pas configurées sur cette version de MediLink.");
-      return;
-    }
-    setPushState("loading");
-    setPushMessage(null);
-    try {
-      await registerWebPush();
-      setPushState("enabled");
-      setPushMessage("Les notifications sont activées sur ce navigateur.");
-    } catch (error) {
-      setPushState("error");
-      setPushMessage(error instanceof Error ? error.message : "Impossible d’activer les notifications.");
-    }
-  }
-
   return (
     <Popover>
       <PopoverTrigger render={trigger} />
@@ -100,22 +78,6 @@ export function ActivityPopover({
           <span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-primary">
             <Bell className="size-4" aria-hidden />
           </span>
-        </div>
-
-        <div className="border-b border-slate-100 px-4 py-3">
-          <button
-            type="button"
-            onClick={() => void enablePush()}
-            disabled={pushState === "loading" || pushState === "enabled"}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/10 disabled:cursor-default disabled:opacity-70"
-          >
-            {pushState === "loading" ? "Activation en cours…" : pushState === "enabled" ? "Notifications activées" : "Activer les notifications sur ce navigateur"}
-          </button>
-          {pushMessage && (
-            <p role="status" aria-live="polite" className={`mt-2 text-xs ${pushState === "error" ? "text-danger" : "text-emerald-700"}`}>
-              {pushMessage}
-            </p>
-          )}
         </div>
 
         <ul aria-label="Activités récentes" className="max-h-96 divide-y divide-slate-100 overflow-y-auto">
