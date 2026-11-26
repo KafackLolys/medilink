@@ -26,7 +26,7 @@ messaging.onBackgroundMessage((payload) => {
   const title = data.title || "MediLink";
   self.registration.showNotification(title, {
     body: data.body || "Vous avez une nouvelle notification.",
-    icon: "/favicon.ico",
+    icon: "https://raw.githubusercontent.com/KafackLolys/medilink-flutter/main/assets/icon/favicon.png",
     data: { url: data.url || "/" },
   });
 });
