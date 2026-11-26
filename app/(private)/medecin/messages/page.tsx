@@ -2,7 +2,7 @@
 
 import { doctorCard, DoctorPageHeading } from "../../components/doctor-ui";
 import { NotificationTypeIcon } from "@/components/custum/activity-popover";
-import { Bell, Check, MessageCircle, Send, ShieldCheck } from "lucide-react";
+import { Bell, Check, MessageCircle, RefreshCw, Send, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -106,7 +106,7 @@ export default function DoctorMessagesPage() {
                   const mine = (message.senderUserId === session?.user.id || Boolean(message.deliveryStatus));
                   return <li key={message.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] rounded-2xl px-3 py-2 ${mine ? "rounded-br-sm bg-primary text-white" : "rounded-bl-sm bg-white text-ink shadow-sm"}`}>
-                    <p className="whitespace-pre-wrap text-sm leading-5">{message.body}</p><p className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-blue-100" : "text-muted"}`}>{new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(message.sentAt))}{message.deliveryStatus === "sending" ? " · Envoi…" : message.deliveryStatus === "failed" ? " · Échec de l’envoi" : ""}</p>
+                    <p className="whitespace-pre-wrap text-sm leading-5">{message.body}</p><div className={`mt-1 flex items-center justify-end gap-2 text-[10px] ${mine ? "text-blue-100" : "text-muted"}`}><span>{new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(message.sentAt))}{message.deliveryStatus === "sending" ? " · Envoi…" : message.deliveryStatus === "failed" ? " · Échec de l’envoi" : ""}</span>{message.deliveryStatus === "failed" && <button type="button" onClick={() => void messaging.retry(message.id)} disabled={messaging.sending} className="inline-flex items-center gap-1 font-semibold text-rose-100 underline underline-offset-2 disabled:opacity-50" aria-label="Réessayer l’envoi du message"><RefreshCw className="size-3" aria-hidden />Réessayer</button>}</div>
                   </div>
                 </li>;
                 })}
