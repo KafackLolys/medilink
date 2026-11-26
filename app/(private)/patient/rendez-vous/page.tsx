@@ -5,7 +5,7 @@ import { Tabs } from "@/components/custum/tabs";
 import { usePatientAppointments } from "@/hooks/use-patient-appointments";
 import type { AppointmentStatus, PatientAppointment } from "@/services/appointment-service";
 import type { Status } from "@/components/custum/status-badge";
-import { CalendarDays, Clock, House, Video } from "lucide-react";
+import { CalendarDays, Clock, House, Star, Video } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -41,6 +41,7 @@ function formatAppointment(date: string) {
 
 function AppointmentItem({ appointment }: { appointment: PatientAppointment }) {
   const date = formatAppointment(appointment.scheduledAt);
+  const isCompleted = appointment.status === "completed";
   return (
     <li className={`${card} p-5 sm:p-6`}>
       <div className="flex gap-4 sm:gap-5">
@@ -68,8 +69,17 @@ function AppointmentItem({ appointment }: { appointment: PatientAppointment }) {
           </p>
         </div>
       </div>
-      <div className="mt-5 border-t border-slate-100 pt-4">
+      <div className="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-4">
         <Link href={`/patient/rendez-vous/${appointment.id}`} className="inline-flex h-11 items-center rounded-full bg-primary px-6 font-semibold text-white">Voir le détail</Link>
+        {isCompleted && (
+          <Link
+            href={`/patient/rendez-vous/${appointment.id}#avis`}
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-5 font-semibold text-amber-800 hover:bg-amber-100"
+          >
+            <Star className="size-4 fill-current" aria-hidden />
+            Noter le médecin
+          </Link>
+        )}
       </div>
     </li>
   );
