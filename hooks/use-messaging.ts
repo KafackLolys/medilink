@@ -156,8 +156,10 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
       if (event.conversationId === selectedId) {
         setMessages((current) => {
           if (current.some((message) => message.id === event.message.id)) return current;
+          // Reconcile both initial sends and retries with the server-confirmed
+          // event, even if the HTTP request later times out or fails.
           const optimisticIndex = current.findIndex((message) =>
-            message.deliveryStatus === "sending" &&
+            (message.deliveryStatus === "sending" || message.deliveryStatus === "failed") &&
             message.body === event.message.body
           );
           if (optimisticIndex >= 0) {
@@ -341,6 +343,23 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
         ));
         return true;
       } catch (cause) {
+        // The server may have accepted the message while the HTTP response was
+        // lost. Reconcile from the conversation API before showing a failure.
+        try {
+          const refreshed = await messageService.listMessages(selectedId);
+          const failedAt = new Date(failedMessage.sentAt).getTime();
+          const wasAccepted = refreshed.items.some((message) =>
+            message.body === failedMessage.body &&
+            new Date(message.sentAt).getTime() >= failedAt
+          );
+          if (wasAccepted) {
+            setMessages(refreshed.items);
+            setError(null);
+            return true;
+          }
+        } catch {
+          // Keep the original error and failed state if reconciliation is unavailable.
+        }
         setMessages((current) => current.map((message) =>
           message.id === messageId
             ? { ...message, deliveryStatus: "failed" as const }
