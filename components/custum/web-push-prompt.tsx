@@ -22,6 +22,7 @@ export function WebPushPrompt() {
       }
       if (!isWebPushConfigured() || !("Notification" in window) || !("serviceWorker" in navigator) || !window.isSecureContext) {
         setState("unsupported");
+        console.log(state,": Les notifications push nécessitent un navigateur compatible, une connexion HTTPS et une configuration Firebase Web valide.");
         return;
       }
 
@@ -86,7 +87,7 @@ export function WebPushPrompt() {
           {state === "blocked"
             ? "Les notifications sont bloquées dans les paramètres de votre navigateur. Autorisez-les pour MediLink depuis les paramètres du site, puis rechargez la page."
             : state === "unsupported"
-              ? "Les notifications push nécessitent un navigateur compatible, une connexion HTTPS et une configuration Firebase Web valide."
+              ? "Les notifications nécessitent un navigateur compatible, une connexion valide."
               : "Autorisez MediLink à vous envoyer des notifications pour recevoir vos nouveaux messages, rendez-vous et mises à jour, même lorsque le site est en arrière-plan."}
         </p>
         {message && <p role="alert" className="mt-3 text-sm text-red-600">{message}</p>}

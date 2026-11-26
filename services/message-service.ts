@@ -18,6 +18,7 @@ export interface ConversationMessage {
   body: string;
   sentAt: string;
   readAt: string | null;
+  deliveryStatus?: "sending" | "sent" | "failed";
 }
 
 export const messageService = {

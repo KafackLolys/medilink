@@ -1,3 +1,9 @@
+/**
+ * Structure de la base de données pour l'application Medilink.
+ * N.B: toujours utiliser des enums en anglais
+ */
+
+
 export enum UserRole {
   PATIENT = "patient",
   DOCTOR = "doctor",
@@ -222,6 +228,9 @@ export interface District extends Timestamped {
   /** Foreign key to City.id. */
   cityId: string;
   name: string;
+  /** Optional public approximate district center; NEVER a patient's address. */
+  centerLatitude?: number | null;
+  centerLongitude?: number | null;
 }
 
 export interface Address extends Timestamped {
@@ -251,14 +260,19 @@ export interface DoctorServiceArea extends Timestamped {
 
 export interface MedicalNeed extends Timestamped {
   id: string;
-  /** Foreign key to PatientProfile.id. */
-  patientProfileId: string;
+  /** Firebase UID of the patient who owns this need. */
+  ownerUserId: string;
+  /** Optional relation once a patient profile document has been created. */
+  patientProfileId: string | null;
   /** Foreign key to Specialty.id. */
   specialtyId: string | null;
-  /** Foreign key to District.id. */
-  districtId: string;
+  /** Snapshot labels are retained until city, district and specialty catalogs exist. */
+  specialty: string;
+  city: string;
+  district: string;
   title: string;
   description: string;
+  symptoms: string[];
   durationDescription: string | null;
   priority: NeedPriority;
   consultationMode: ConsultationMode;
@@ -266,8 +280,20 @@ export interface MedicalNeed extends Timestamped {
   availableFrom: Date | null;
   /** Private exact address; expose only after an authorized interaction. */
   privateAddress: string | null;
+  attachments: NeedAttachment[];
   publishedAt: Date | null;
   consentAt: Date | null;
+}
+
+export interface NeedAttachment {
+  id: string;
+  fileName: string;
+  /** Private gs:// reference; never a public download token URL. */
+  storageUrl: string;
+  storagePath: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedAt: Date;
 }
 
 export interface Symptom extends Timestamped {
@@ -349,6 +375,7 @@ export interface Appointment extends Timestamped {
   addressId: string | null;
   cancellationReason: string | null;
   completedAt: Date | null;
+  reason?: string | null;
 }
 
 export interface DoctorWeeklyAvailability extends Timestamped {
@@ -386,6 +413,8 @@ export interface Message {
   conversationId: string;
   /** Foreign key to User.id. */
   senderUserId: string;
+  /** Foreign key to the message recipient. */
+  receiverUserId: string;
   body: string;
   sentAt: Date;
   readAt: Date | null;
@@ -399,6 +428,10 @@ export interface Notification extends Timestamped {
   title: string;
   body: string;
   targetUrl: string | null;
+  /** Conversation associated with message notifications, when applicable. */
+  conversationId?: string;
+  /** Original author of a message notification, used to prevent self-notifications. */
+  senderUserId?: string;
   readAt: Date | null;
 }
 
