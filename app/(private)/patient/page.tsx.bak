@@ -45,7 +45,7 @@ export default function PatientDashboard() {
   const proposals = active.reduce((sum, need) => sum + need.interested, 0);
 
   return <div className="space-y-8">
-    <header><h1 className="text-3xl font-extrabold text-night">Bonjour, bienvenue 👋</h1><p className="mt-2 text-muted">Vos démarches médicales et vos rendez-vous, en temps réel.</p></header>
+    <header><h1 className="text-3xl font-extrabold text-night">Bonjour, bienvenue </h1><p className="mt-2 text-muted">Vos démarches médicales et vos rendez-vous, en temps réel.</p></header>
     <div className="grid gap-4 sm:grid-cols-2">
       <Link href="/patient/medecins" className="rounded-3xl bg-primary/10 p-6"><Stethoscope className="size-7 text-primary"/><h2 className="mt-3 text-xl font-bold">Trouver un médecin</h2><span className="mt-2 inline-flex items-center gap-2 font-semibold">Rechercher <ArrowRight className="size-4"/></span></Link>
       <Link href="/patient/besoins/nouveau" className="rounded-3xl bg-secondary/10 p-6"><FileText className="size-7 text-secondary"/><h2 className="mt-3 text-xl font-bold">Publier un besoin</h2><span className="mt-2 inline-flex items-center gap-2 font-semibold">Créer une demande <ArrowRight className="size-4"/></span></Link>
