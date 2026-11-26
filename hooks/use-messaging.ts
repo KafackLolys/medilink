@@ -311,6 +311,51 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
     [selectedId],
   );
 
+  const retry = useCallback(
+    async (messageId: string): Promise<boolean> => {
+      if (!selectedId || sendingRef.current) return false;
+      const failedMessage = messages.find(
+        (message) => message.id === messageId && message.deliveryStatus === "failed",
+      );
+      if (!failedMessage) return false;
+
+      sendingRef.current = true;
+      setSending(true);
+      setError(null);
+      setMessages((current) => current.map((message) =>
+        message.id === messageId
+          ? { ...message, deliveryStatus: "sending" as const }
+          : message
+      ));
+      try {
+        const sentMessage = await messageService.sendMessage(selectedId, failedMessage.body);
+        setMessages((current) => current.map((message) =>
+          message.id === messageId || message.id === sentMessage.id
+            ? { ...sentMessage, deliveryStatus: "sent" as const }
+            : message
+        ));
+        setConversations((current) => current.map((conversation) =>
+          conversation.id === selectedId
+            ? { ...conversation, preview: sentMessage.body, lastMessageAt: sentMessage.sentAt }
+            : conversation
+        ));
+        return true;
+      } catch (cause) {
+        setMessages((current) => current.map((message) =>
+          message.id === messageId
+            ? { ...message, deliveryStatus: "failed" as const }
+            : message
+        ));
+        setError(cause instanceof Error ? cause.message : "Impossible d’envoyer ce message.");
+        return false;
+      } finally {
+        sendingRef.current = false;
+        setSending(false);
+      }
+    },
+    [messages, selectedId],
+  );
+
   return {
     conversations,
     selectedId,
@@ -322,6 +367,7 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
     sending,
     error,
     send,
+    retry,
     refreshConversations,
     markConversationRead,
   };
