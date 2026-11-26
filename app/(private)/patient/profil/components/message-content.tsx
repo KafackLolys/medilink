@@ -5,6 +5,7 @@ import {
   Bell,
   Check,
   MessageCircle,
+  RefreshCw,
   Send,
   UserRound,
 } from "lucide-react";
@@ -342,6 +343,18 @@ export function PatientMessagesContent() {
                           }).format(new Date(message.sentAt))}
                           {message.deliveryStatus === "sending" ? " · Envoi…" : message.deliveryStatus === "failed" ? " · Échec de l’envoi" : ""}
                         </p>
+                        {message.deliveryStatus === "failed" && (
+                          <button
+                            type="button"
+                            onClick={() => void messaging.retry(message.id)}
+                            disabled={messaging.sending}
+                            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-rose-100 underline underline-offset-2 disabled:opacity-50"
+                            aria-label="Réessayer l’envoi du message"
+                          >
+                            <RefreshCw className="size-3" aria-hidden />
+                            Réessayer
+                          </button>
+                        )}
                       </div>
                     </li>
                   );
