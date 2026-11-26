@@ -346,11 +346,11 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
         // The server may have accepted the message while the HTTP response was
         // lost. Reconcile from the conversation API before showing a failure.
         try {
-          await refreshMessages(selectedId);
           const refreshed = await messageService.listMessages(selectedId);
+          const failedAt = new Date(failedMessage.sentAt).getTime();
           const wasAccepted = refreshed.items.some((message) =>
             message.body === failedMessage.body &&
-            message.senderUserId === failedMessage.senderUserId
+            new Date(message.sentAt).getTime() >= failedAt
           );
           if (wasAccepted) {
             setMessages(refreshed.items);
@@ -372,7 +372,7 @@ export function useMessaging(enabled = true, trackSelectedConversation = true) {
         setSending(false);
       }
     },
-    [messages, refreshMessages, selectedId],
+    [messages, selectedId],
   );
 
   return {
