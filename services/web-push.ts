@@ -123,7 +123,7 @@ export async function listenForWebPush(
     ) {
       new Notification(title, {
         body,
-        icon: "/favicon.ico",
+        icon: "https://raw.githubusercontent.com/KafackLolys/medilink-flutter/main/assets/icon/favicon.png",
         data: { url: payload.data?.url ?? "/" },
       });
     }
