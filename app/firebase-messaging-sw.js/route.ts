@@ -30,15 +30,6 @@ importScripts("https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-com
 firebase.initializeApp(${JSON.stringify(config)});
 const messaging = firebase.messaging();
 const configuredOrigin = ${JSON.stringify(rawSiteUrl)};
-messaging.onBackgroundMessage((payload) => {
-  const data = payload.data || {};
-  const title = data.title || "MediLink";
-  self.registration.showNotification(title, {
-    body: data.body || "Vous avez une nouvelle notification.",
-    icon: "https://raw.githubusercontent.com/KafackLolys/medilink-flutter/main/assets/icon/favicon.png",
-    data: { url: data.url || "/" },
-  });
-});
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const rawUrl = event.notification.data && event.notification.data.url

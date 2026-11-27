@@ -4,7 +4,7 @@ import { doctorCard, DoctorPageHeading } from "../../components/doctor-ui";
 import { NotificationTypeIcon } from "@/components/custum/activity-popover";
 import { Bell, Check, MessageCircle, RefreshCw, Send, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useMessaging } from "@/hooks/use-messaging";
 import { useAuthSession } from "@/hooks/use-auth-session";
@@ -16,6 +16,10 @@ export default function DoctorMessagesPage() {
   const [text, setText] = useState("");
   const notifications = useNotifications(20, true);
   const unreadNotifications = notifications.unreadCount;
+  const lastReadMessageRef = useRef<HTMLLIElement>(null);
+  const lastReadMessageId = [...messaging.messages].reverse().find(
+    (message) => message.readAt && message.senderUserId !== session?.user.id,
+  )?.id ?? messaging.messages[messaging.messages.length - 1]?.id ?? null;
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -24,6 +28,12 @@ export default function DoctorMessagesPage() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (!messaging.messagesLoading && messaging.selectedId) {
+      lastReadMessageRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
+    }
+  }, [messaging.selectedId, messaging.messagesLoading, lastReadMessageId]);
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,7 +114,7 @@ export default function DoctorMessagesPage() {
                 {!messaging.messagesLoading && messaging.messages.length === 0 && <li className="text-center text-sm text-muted">Aucun message. Envoyez le premier message de la conversation.</li>}
                 {messaging.messages.map((message) => {
                   const mine = (message.senderUserId === session?.user.id || Boolean(message.deliveryStatus));
-                  return <li key={message.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                  return <li key={message.id} ref={message.id === lastReadMessageId ? lastReadMessageRef : undefined} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] rounded-2xl px-3 py-2 ${mine ? "rounded-br-sm bg-primary text-white" : "rounded-bl-sm bg-white text-ink shadow-sm"}`}>
                     <p className="whitespace-pre-wrap text-sm leading-5">{message.body}</p><div className={`mt-1 flex items-center justify-end gap-2 text-[10px] ${mine ? "text-blue-100" : "text-muted"}`}><span>{new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(message.sentAt))}{message.deliveryStatus === "sending" ? " · Envoi…" : message.deliveryStatus === "failed" ? " · Échec de l’envoi" : ""}</span>{message.deliveryStatus === "failed" && <button type="button" onClick={() => void messaging.retry(message.id)} disabled={messaging.sending} className="inline-flex items-center gap-1 font-semibold text-rose-100 underline underline-offset-2 disabled:opacity-50" aria-label="Réessayer l’envoi du message"><RefreshCw className="size-3" aria-hidden />Réessayer</button>}</div>
                   </div>

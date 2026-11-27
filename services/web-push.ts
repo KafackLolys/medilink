@@ -124,7 +124,9 @@ export async function listenForWebPush(
       const targetUrl = payload.data?.url ?? "/";
       const notification = new Notification(title, {
         body,
-        icon: "https://raw.githubusercontent.com/KafackLolys/medilink-flutter/main/assets/icon/favicon.png",
+        icon: "/favicon.ico",
+        badge: "/favicon.ico",
+        tag: payload.data?.notificationId ?? `${title}:${body}`,
         data: { url: targetUrl },
       });
       notification.onclick = () => {
