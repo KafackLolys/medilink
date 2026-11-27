@@ -10,7 +10,7 @@ import {
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { NotificationTypeIcon } from "@/components/custum/activity-popover";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useMessaging } from "@/hooks/use-messaging";
@@ -26,6 +26,10 @@ export function PatientMessagesContent() {
   const unreadMessagesCount = useNotificationStore(
     (state) => state.unreadMessagesCount,
   );
+  const lastReadMessageRef = useRef<HTMLLIElement>(null);
+  const lastReadMessageId = [...messaging.messages].reverse().find(
+    (message) => message.readAt && message.senderUserId !== session?.user.id,
+  )?.id ?? messaging.messages[messaging.messages.length - 1]?.id ?? null;
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -37,6 +41,12 @@ export function PatientMessagesContent() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (!messaging.messagesLoading && messaging.selectedId) {
+      lastReadMessageRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
+    }
+  }, [messaging.selectedId, messaging.messagesLoading, lastReadMessageId]);
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -326,6 +336,7 @@ export function PatientMessagesContent() {
                   return (
                     <li
                       key={message.id}
+                      ref={message.id === lastReadMessageId ? lastReadMessageRef : undefined}
                       className={`flex ${mine ? "justify-end" : "justify-start"}`}
                     >
                       <div
